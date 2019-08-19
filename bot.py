@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands as cmds
 from discord.utils import get
 from modules.utils.checks import user_has_role
-from modules.webserver.app import app
+# from modules.webserver.app import app
 
 
 async def prefix_callable(bot, message) -> list:
@@ -86,11 +86,11 @@ class AstutusBot(cmds.AutoShardedBot):
         setattr(self, "link_normal", oauth.format("2146954487"))
         print(f"Ready: {self.user} (ID: {self.user.id})")
         print(f"Invite link: {self.link_admin}")
-        webserver = app.create_server(
-            host="0.0.0.0", port=80, return_asyncio_server=True
-        )
+        # webserver = app.create_server(
+        #     host="0.0.0.0", port=80, return_asyncio_server=True
+        # )
         loop = self.loop
-        asyncio.ensure_future(webserver)
+        # asyncio.ensure_future(webserver)
 
     async def on_command_error(self, ctx, error):
         """Hooks for discord.py command errors."""

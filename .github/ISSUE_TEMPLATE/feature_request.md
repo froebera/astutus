@@ -3,8 +3,7 @@ name: Feature request
 about: Suggest an idea for astutus
 title: "[FEATURE] <title goes here>"
 labels: enhancement, good first issue
-assignees: lxmcneill
-
+assignees: froebera
 ---
 
 **Is your feature request related to a problem? Please describe.**

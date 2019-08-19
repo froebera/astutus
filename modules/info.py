@@ -46,6 +46,7 @@ class InfoModule(cmd.Cog):
             i = await self.bot.cdn.upload_file("g", guild.id, url, ext, ctype)
             await self.bot.db.hset("guild_cache", guild.id, i)
             cached = i
+        print(cached)
         return cached
 
     @cmd.command(name="emoji", aliases=["e"])

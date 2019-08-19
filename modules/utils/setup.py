@@ -37,11 +37,13 @@ def setup_bot(bot):
     )
     bot.db = pool
 
-    bot.cdn = CDN(
-        bot.config["CDN"]["host"],
-        bot.config["CDN"]["space"],
-        bot.config["CDN"]["client"],
-        bot.config["CDN"]["secret"],
-    )
+    bot.cdn = None
+
+    # bot.cdn = CDN(
+    #     bot.config["CDN"]["host"],
+    #     bot.config["CDN"]["space"],
+    #     bot.config["CDN"]["client"],
+    #     bot.config["CDN"]["secret"],
+    # )
     profanity.load_censor_words()
     setattr(bot, "profanity", profanity)
