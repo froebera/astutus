@@ -67,20 +67,20 @@ class InfoModule(cmd.Cog):
         split = emoji.replace(">", "").replace("<", "").split(":")
         animate, name, id = split
         url = f"https://cdn.discordapp.com/emojis/{id}"
-        cached = await self.bot.db.hget("emoji_cache", f"{name}_{id}")
-        if not cached or cached is None:
-            mimetype = "image/gif" if animate else "image/png"
-            ext = "gif" if animate else "png"
-            url = f"{url}.{ext}"
-            async with aiohttp.ClientSession() as cs:
-                async with cs.get(url) as r:
-                    i = await self.bot.cdn.upload_file("e", id, r, ext, mimetype)
-            cached = i
-            await self.bot.db.hset("emoji_cache", f"{name}_{id}", i)
+        # cached = await self.bot.db.hget("emoji_cache", f"{name}_{id}")
+        # if not cached or cached is None:
+        #     mimetype = "image/gif" if animate else "image/png"
+        #     ext = "gif" if animate else "png"
+        #     url = f"{url}.{ext}"
+        #     async with aiohttp.ClientSession() as cs:
+        #         async with cs.get(url) as r:
+        #             i = await self.bot.cdn.upload_file("e", id, r, ext, mimetype)
+        #     cached = i
+        #     await self.bot.db.hset("emoji_cache", f"{name}_{id}", i)
 
         embed = await self.bot.embed()
         embed.title = f"{name} emoji"
-        embed.set_image(url=cached)
+        embed.set_image(url=url)
         embed.image.width = 384
         embed.image.height = 384
         edict = embed.to_dict()
