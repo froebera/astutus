@@ -269,19 +269,22 @@ class InfoModule(cmd.Cog):
     @info.command(name="bot")
     @cmd.guild_only()
     async def info_bot(self, ctx: cmd.Context):
+        print("info")
         "Get information about the bot!"
         emoji = self.bot.get_cog("TapTitansModule").emoji("elixum")
         embed = await self.bot.embed()
         embed.title = f"{emoji} {self.bot.user}"
         embed.description = "Please insert coin to continue."
         embed.color = 0x473080
-        # )
+        
         embed.set_thumbnail(url=emoji.url)
         embed.add_field(
             name="Author",
-            value=str(self.bot.get_user(305879281580638228)),
+            value=str(self.bot.get_user(275522204559605770)),
             inline=False,
         )
+        # print(self.process.memory_percent())
+            
         embed.add_field(
             name="Memory",
             value=humanfriendly.format_size(self.process.memory_full_info().uss),
@@ -319,6 +322,7 @@ class InfoModule(cmd.Cog):
             value=f"{total_members} total - {total_unique} unique - {total_online} online",
             inline=False,
         )
+        print("test")
         await ctx.send(embed=embed)
 
     @info.command(name="db")
