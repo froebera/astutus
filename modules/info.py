@@ -25,7 +25,12 @@ class InfoModule(cmd.Cog):
         if user is None:
             user = ctx.author.id
         user = await self.bot.fetch_user(user)
-        cached = await self.bot.db.hget("avatar_cache", user.id)
+        url = user.avatar_url_as(static_format="png", size=1024)
+        
+        # cached = await self.bot.db.hget("avatar_cache", user.id)
+        # await self.bot.db.hset("avatar_cache", user.id, "https://google.de")
+        # print("after hset")
+        # print(f"{user.id}")
         # if not cached or cached is None:
         #     url = user.avatar_url_as(static_format="png", size=1024)
         #     urls = str(url).split("/")[-1].split("?")[0]
@@ -35,11 +40,13 @@ class InfoModule(cmd.Cog):
         #     await self.bot.db.hset("avatar_cache", user.id, i)
         #     cached = i
 
-        if not cached or cached is None:
-            url = user.avatar_url_as(static_format="png", size=1024)
-            await self.bot.db.hset("avatar_cache", user.id, url)
-            cached = url
-        return cached, user
+        # if not cached or cached is None:
+            
+        #     # await self.bot.db.hset("avatar_cache", user.id, url.__str__())
+        #     await self.bot.db.hset("avatar_cache", user.id, url)
+        #     cached = url
+
+        return url, user
 
     async def get_or_upload_guildicon(self, guild):
         cached = await self.bot.db.hget("guild_cache", guild.id)
@@ -51,7 +58,6 @@ class InfoModule(cmd.Cog):
             i = await self.bot.cdn.upload_file("g", guild.id, url, ext, ctype)
             await self.bot.db.hset("guild_cache", guild.id, i)
             cached = i
-        print(cached)
         return cached
 
     @cmd.command(name="emoji", aliases=["e"])
@@ -92,7 +98,7 @@ class InfoModule(cmd.Cog):
             await ctx.send(embed=embed)
 
     @cmd.command()
-    @cmd.cooldown(1, 30, cmd.BucketType.user)
+    @cmd.cooldown(1, 15, cmd.BucketType.user)
     async def avatar(self, ctx, *user):
         if user:
             user = await choose_item(ctx, "member", ctx.guild, " ".join(user).lower())
@@ -275,7 +281,6 @@ class InfoModule(cmd.Cog):
     @info.command(name="bot")
     @cmd.guild_only()
     async def info_bot(self, ctx: cmd.Context):
-        print("info")
         "Get information about the bot!"
         emoji = self.bot.get_cog("TapTitansModule").emoji("elixum")
         embed = await self.bot.embed()
@@ -328,7 +333,6 @@ class InfoModule(cmd.Cog):
             value=f"{total_members} total - {total_unique} unique - {total_online} online",
             inline=False,
         )
-        print("test")
         await ctx.send(embed=embed)
 
     @info.command(name="db")
