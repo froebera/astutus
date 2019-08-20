@@ -1,382 +1,277 @@
 {
-    "autorole": {
-        "desc": "Allows you to automagically give users a role when they join the server. You can access this setting with the **{ctx.prefix}settings** menu. Use **{ctx.prefix}help set role** for more info."
-    },
-    "disable": {
-        "desc": "Shows if there are any modules disabled in the server.",
-        "usage": [
-            "disable"
-        ]
-    },
-    "disable add": {
-        "desc": "Allows you to disable a module from being used in the server.\nThe bot will not even respond to commands from a module when it is disabled.\nYou cannot disable the disable module or the utility module.",
-        "usage": [
-            "disable add <modulename>",
-            "disable add info"
-        ]
-    },
-    "disable remove": {
-        "desc": "Removes a module from the list of disabled modules in the guild.",
-        "usage": [
-            "disable remove <modulename>",
-            "disable remove info"
-        ]
-    },
-    "xp": {
-        "desc": "Shows you your xp for the server or globally.",
-        "usage": [
-            "xp here",
-            "xp global"
-        ]
-    },
-    "xp ignore": {
-        "desc": "Allows you to disable a user or channel from receiving XP in the guild.",
-        "usage": [
-            "xpignore <user/channel>",
-            "xpignore @user1234"
-        ]
-    },
-    "info bot": {
-        "desc": "This is a test description.",
-        "usage": [
-            "info bot"
-        ]
-    },
-    "info user": {
-        "desc": "Displays information about a user.\nThe user does not need to be in the guild for this command to work.",
-        "usage": [
-            "info user",
-            "info user <username>"
-        ]
-    },
-    "taptitans artifact": {
-        "desc": "Display information about a tap titans artifact.",
-        "usage": [
-            "tt artifact",
-            "tt artifact <name>",
-            "tt artifact <lvl_from> <lvl_to>"
-        ]
-    },
-    "taptitans artifact bonus": {
-        "desc": "Display a list of tap titans artifacts groped by bonus type.\nRunning this command without an argument will show avaliable bonus types.",
-        "usage": [
-            "tt artifact bonus",
-            "tt artifact bonus <type>",
-            "tt artifact bonus general"
-        ]
-    },
-    "taptitans groupadd": {
-        "desc": "Adds a new raid group to the server. You will only ever need more than one of these if you have more than one Tap Titans 2 clan in your discord server *looking at you AC & GT*.",
-        "usage": [
-            "tt groupadd",
-            "tt groupadd <slot>"
-        ]
-    },
-    "taptitans groupdel": {
-        "desc": "Deletes an existing raid group in the slot. Warning - irreversible. Do this only if you mean it.",
-        "usage": [
-            "tt groupdel",
-            "tt groupdel <slot>"
-        ]
-    },
-    "taptitans groupget": {
-        "desc": "Displays a tap titans raid group and the most important values that go into setting up a raid, including roles and broadcast channel.",
-        "usage": [
-            "tt groupget",
-            "tt groupget <slot>"
-        ]
-    },
-    "taptitans set": {
-        "desc": "Allows you to change a tap titans raid group setting.\nIf group is not supplied, it defaults to the first/only group.",
-        "usage": [
-            "tt set <key> <value>",
-            "tt set <group> <key> <value>"
-        ]
-    },
-    "taptitans raid": {
-        "desc": "Allows you to set up a timer for a tap titans 2 clan raid.\nIf group is not supplied, it defaults to the first/only group.\nLikewise for tier/zone.",
-        "usage": [
-            "tt raid",
-            "tt raid <timer>",
-            "tt raid 23h22m02s",
-            "tt raid <group:option> <timer>",
-            "tt raid g1 23h22m02s"
-        ]
-    },
-    "taptitans raid cancel": {
-        "desc": "Cancel a currently running raid timer. You can do this any time.",
-        "usage": [
-            "tt raid cancel",
-            "tt raid <group> cancel"
-        ]
-    },
-    "taptitans raid clear": {
-        "desc": "Mark a tap titans raid as completed/cleared. You can do this only after a raid has spawned.",
-        "usage": [
-            "tt raid clear",
-            "tt raid <group> cancel"
-        ]
-    },
-    "taptitans raid info": {
-        "desc": "Get information about a tap titans raid for a given tier and zone.",
-        "usage": [
-            "tt raid info",
-            "tt raid info <tier> <zone>",
-            "tt raid info 2 7"
-        ]
-    },
-    "taptitans queue": {
-        "desc": "The queue system for tap titans raids.\nRunning the command with no arguments will enter you into the queue.\n**show** will display the queue\n**clear** clears the entire queue and any currently attacking groups\n**skip** will skip the currently attacking group e.g. if someone is afk",
-        "usage": [
-            "tt queue",
-            "tt queue show",
-            "tt queue clear",
-            "tt queue skip"
-        ]
-    },
-    "taptitans unqueue": {
-        "desc": "Allows you to unqueue from the current raid queue.",
-        "usage": [
-            "tt unqueue"
-        ]
-    },
-    "taptitans done": {
-        "desc": "Allows you to mark your current raid attack as complete.\nIf the queue is still ongoing, you can queue back up at the end.\nWon't work if you're not attacking.",
-        "usage": [
-            "tt done"
-        ]
-    },
-    "taptitans tournament": {
-        "desc": "Displays a forecast of upcoming Tap Titans 2 tournaments.\nIcon colour will change depending on tournament status. Blue for open and red for closed.\nYou can extend the forecast by up to 10 tournaments.\nRunning the command without **s** on the end will display current tournament only.",
-        "usage": [
-            "tt tournament",
-            "tt tournaments",
-            "tt tournaments <amount>",
-            "tt tournaments 10"
-        ]
-    },
-    "taptitans bonuses": {
-        "desc": "Displays a list of possible tournament bonuses for Tap Titans Tournaments.",
-        "usage": [
-            "tt bonuses"
-        ]
-    },
-    "taptitans card": {
-        "desc": "Displays information about a tap titans card.\nNot specifying a card will show a list.\nYou can search by acronym, too.",
-        "usage": [
-            "tt card",
-            "tt card <name>",
-            "tt card <acronym>"
-        ]
-    },
-    "taptitans deck": {
-        "desc": "Displays information about a curated selection of tap titans decks.\nWill display a list of available decks if you don't specify one.",
-        "usage": [
-            "tt deck",
-            "tt deck <name>"
-        ]
-    },
-    "taptitans optimizers": {
-        "desc": "Displays links to popular taptitans optimizers.",
-        "usage": [
-            "tt opti"
-        ]
-    },
-    "taptitans compendium": {
-        "desc": "Displays a link to the tap titans compendium.",
-        "usage": [
-            "tt compendium"
-        ]
-    },
-    "taptitans titancount": {
-        "desc": "Displays titan count at a given stage.\nYou can optionally supply all of your stats.\nLater I'll let you record them.",
-        "usage": [
-            "tt titancount",
-            "tt titancount <stage> <ip> <ab> <snap>"
-        ]
-    },
-    "taptitans edskip": {
-        "desc": "Shows you the optimal level of ED that you need, given the information available.\nNote here that optimal means a full SC splash with 1 snap active.\n**mi** = mystic impact\n**ab** = arcane bargain\n**mech_sw** = mechanized sword multiplier e.g. 0.75\n**angelic_gu** - angelic guardian unlocked (true/false)\n**anno_pl** = anniversary platinum set multiplier e.g. 1.23\n\nNote: using **tt my set <itemset> yes** you can set these to unlocked, and same for ms/ip/ab with **tt my <stat> <amount>**",
-        "usage": [
-            "tt ed",
-            "tt ed <stage> <ip> <mi> <ab> <mech_sw> <angelic_gu> <anno_pl>"
-        ]
-    },
-    "taptitans skill": {
-        "desc": "Shows you information about a skill and its effects.\nEntering a level will show you the cost for that level as well as total accumulated SP cost.",
-        "usage": [
-            "tt skills",
-            "tt skill <skill>",
-            "tt skill co",
-            "tt skill <skill> <level>",
-            "tt skill assassinate 20"
-        ]
-    },
-    "taptitans convert": {
-        "desc": "Converts a tap titans letter notation number to the master race: scientific notation.",
-        "usage": [
-            "tt convert <value>",
-            "tt convert 1masterrace"
-        ]
-    },
-    "taptitans gold": {
-        "desc": "Displays information about a tap titans gold source and what artifacts you need to make it work.\nNot supplying an argument will show available gold types.",
-        "usage": [
-            "tt gold",
-            "tt gold <type>",
-            "tt gold chesterson"
-        ]
-    },
-    "taptitans build": {
-        "desc": "Allows you to automagically generate a skill tree for the given build + gold type.\nThis will pull off your ms stat if you have set it with **tt my ms <stage>**.\n\nDisclaimer: this command is still very early alpha and so builds are not that great. They're not terrible either, though.",
-        "usage": [
-            "tt build <damage> <gold> <sp>",
-            "tt build sc fairy 2200"
-        ]
-    },
-    "taptitans my": {
-        "desc": "A suite of commands to help you manage your TT2 stats that you have stored with the bot.",
-        "usage": [
-            "tt my code <supportcode>",
-            "tt my <stat> <count>",
-            "tt my <itemset> <yes/no>"
-        ]
-    },
-    "taptitans my profile": {
-        "desc": "Shows your tap titans stats that you recorded with the bot.",
-        "usage": [
-            "tt my profile",
-            "tt my profile <user>"
-        ]
-    },
-    "seen": {
-        "desc": "Displays information about when the bot last saw a person.",
-        "usage": [
-            "seen <user>"
-        ]
-    },
-    "settings prefix": {
-        "desc": "Allows you to set a guild-wide custom prefix.\nMust be 2 characters in length and can only be non-alphanumerals.",
-        "usage": [
-            "set prefix <prefix>",
-            "set prefix $"
-        ]
-    },
-    "settings starboard": {
-        "desc": "Lets you set up a starboard in the server. Specify the channel that the starboard will appear in.",
-        "usage": [
-            "set starboard <channel>"
-        ]
-    },
-    "settings worldchat": {
-        "desc": "Allows your guild to participate in a world chat!\nMessages will be censored by default.",
-        "usage": [
-            "set worldchat <channel>"
-        ]
-    },
-    "settings wccensor": {
-        "desc": "Enable or disable the censor for the world chat.\nKeep in mind the censor is not perfect.",
-        "usage": [
-            "set wccensor <toggle>",
-            "set wccensor False"
-        ]
-    },
-    "settings role": {
-        "desc": "Allows you to set a specified role setting to a given role.\nRunning the command without any roles will show you what is available to set.",
-        "usage": [
-            "settings role <type> <role>",
-            "settings role auto @test-role"
-        ]
-    },
-    "settings automod": {
-        "desc": "Allows you to specify automatic moderator actions based off warning count (offenses).\nCan trigger a mute, kick, or ban.",
-        "usage": [
-            "settings automod <kind> <offense-count>",
-            "settings automod kick 5"
-        ]
-    },
-    "settings logging": {
-        "desc": "Allows you to choose which channel a certain kind of log goes into.\nSeparate from mod logs.",
-        "usage": [
-            "set logging <kind> <channel>",
-            "set logging avatars #user-avatars"
-        ]
-    },
-    "settings greet": {
-        "desc": "Allows you to set a custom greet message for the server.\nYou can also use this to set the greet channel.",
-        "usage": [
-            "set greet <key> <value>",
-            "set greet message 'Hey there {user}!",
-            "set greet channel #welcome-channel"
-        ]
-    },
-    "settings goodbye": {
-        "desc": "Allows you to set a custom goodbye message for the server.\nYou can also use this to set a goodbye channel.",
-        "usage": [
-            "set goodbye <key> <value>",
-            "set goodbye message 'Thanks for the fish, {user}!'",
-            "set greet channel #goodbye-channel"
-        ]
-    },
-    "toggle": {
-        "desc": "Allows you to toggle a feature of the bot on or off.\nAll features default to off to protect the sanctity of the Christian Minecraft servers we know and love.\nDoes not fully disable a module. To do that, use **{ctx.prefix}help disable**",
-        "usage": [
-            "toggle <setting> <on/off>",
-            "toggle worldchat off"
-        ]
-    },
-    "pprefix": {
-        "desc": "Allows you to specify your very own custom, personal prefix.\nOnly works when the server you're on has toggled this feature on.",
-        "usage": [
-            "pprefix <prefix>",
-            "pprefix silly"
-        ]
-    },
-    "help": {
-        "desc": "Well isn't this helpful?"
-    },
-    "worldchat": {
-        "desc": "Allows the server to participate in a world chat!\nBad words are censored by default, and images are not sent.\nDisable the censor to see bad words.\nDisclaimer: I will not be held accountable for any bad content. Disable the censor at your own discretion."
-    },
-    "sar": {
-        "desc": "Self-assigned roles are a fun way to allow users to flare their usernames without you having to manage roles."
-    },
-    "sar group": {
-        "desc": "Shows you what self-assignable role groups are in the server (if there are any).",
-        "usage": [
-            "sar groups"
-        ]
-    },
-    "sar group create": {
-        "desc": "Creates a self-assignable role group, of which each guild can have up to 5.\nNot to be confused with **{ctx.prefix}sar group add**.",
-        "usage": [
-            "sar group create <name>",
-            "sar group create Animals"
-        ]
-    },
-    "sar group delete": {
-        "desc": "Deletes a self-assignable role group from the guild.\nNot to be confused with **{ctx.prefix}sar group remove**.",
-        "usage": [
-            "sar group delete <name>",
-            "sar group delete Animals"
-        ]
-    },
-    "timer": {
-        "desc": "Sets a timer for the given time from now. Pings you in the channel that you set it.\nYou can have up to 5 timers per guild.",
-        "usage": [
-            "timer 20s"
-        ]
-    },
-    "music": {
-        "desc": "For the musical ones. Support the bot and get access to this module! Plays Youtube and allows you to queue up tracks!"
-    },
-    "utility": {
-        "desc": "A bunch of random stuff that I couldn't quite find a home for."
-    },
-    "ping": {
-        "desc": "Tells you the ping. Duh!",
-        "usage": [
-            "ping"
-        ]
-    }
+  "autorole": {
+    "desc": "Allows you to automagically give users a role when they join the server. You can access this setting with the **{ctx.prefix}settings** menu. Use **{ctx.prefix}help set role** for more info."
+  },
+  "disable": {
+    "desc": "Shows if there are any modules disabled in the server.",
+    "usage": ["disable"]
+  },
+  "disable add": {
+    "desc": "Allows you to disable a module from being used in the server.\nThe bot will not even respond to commands from a module when it is disabled.\nYou cannot disable the disable module or the utility module.",
+    "usage": ["disable add <modulename>", "disable add info"]
+  },
+  "disable remove": {
+    "desc": "Removes a module from the list of disabled modules in the guild.",
+    "usage": ["disable remove <modulename>", "disable remove info"]
+  },
+  "xp": {
+    "desc": "Shows you your xp for the server or globally.",
+    "usage": ["xp here", "xp global"]
+  },
+  "xp ignore": {
+    "desc": "Allows you to disable a user or channel from receiving XP in the guild.",
+    "usage": ["xpignore <user/channel>", "xpignore @user1234"]
+  },
+  "info bot": {
+    "desc": "This is a test description.",
+    "usage": ["info bot"]
+  },
+  "info user": {
+    "desc": "Displays information about a user.\nThe user does not need to be in the guild for this command to work.",
+    "usage": ["info user", "info user <username>"]
+  },
+  "taptitans artifact": {
+    "desc": "Display information about a tap titans artifact.",
+    "usage": [
+      "tt artifact",
+      "tt artifact <name>",
+      "tt artifact <lvl_from> <lvl_to>"
+    ]
+  },
+  "taptitans artifact bonus": {
+    "desc": "Display a list of tap titans artifacts groped by bonus type.\nRunning this command without an argument will show avaliable bonus types.",
+    "usage": [
+      "tt artifact bonus",
+      "tt artifact bonus <type>",
+      "tt artifact bonus general"
+    ]
+  },
+  "taptitans groupadd": {
+    "desc": "Adds a new raid group to the server. You will only ever need more than one of these if you have more than one Tap Titans 2 clan in your discord server *looking at you AC & GT*.",
+    "usage": ["tt groupadd", "tt groupadd <slot>"]
+  },
+  "taptitans groupdel": {
+    "desc": "Deletes an existing raid group in the slot. Warning - irreversible. Do this only if you mean it.",
+    "usage": ["tt groupdel", "tt groupdel <slot>"]
+  },
+  "taptitans groupget": {
+    "desc": "Displays a tap titans raid group and the most important values that go into setting up a raid, including roles and broadcast channel.",
+    "usage": ["tt groupget", "tt groupget <slot>"]
+  },
+  "taptitans set": {
+    "desc": "Allows you to change a tap titans raid group setting.\nIf group is not supplied, it defaults to the first/only group.",
+    "usage": ["tt set <key> <value>", "tt set <group> <key> <value>"]
+  },
+  "taptitans raid": {
+    "desc": "Allows you to set up a timer for a tap titans 2 clan raid.\nIf group is not supplied, it defaults to the first/only group.\nLikewise for tier/zone.",
+    "usage": [
+      "tt raid",
+      "tt raid <timer>",
+      "tt raid 23h22m02s",
+      "tt raid <group:option> <timer>",
+      "tt raid g1 23h22m02s"
+    ]
+  },
+  "taptitans raid cancel": {
+    "desc": "Cancel a currently running raid timer. You can do this any time.",
+    "usage": ["tt raid cancel", "tt raid <group> cancel"]
+  },
+  "taptitans raid clear": {
+    "desc": "Mark a tap titans raid as completed/cleared. You can do this only after a raid has spawned.",
+    "usage": ["tt raid clear", "tt raid <group> cancel"]
+  },
+  "taptitans raid info": {
+    "desc": "Get information about a tap titans raid for a given tier and zone.",
+    "usage": ["tt raid info", "tt raid info <tier> <zone>", "tt raid info 2 7"]
+  },
+  "taptitans queue": {
+    "desc": "The queue system for tap titans raids.\nRunning the command with no arguments will enter you into the queue.\n**show** will display the queue\n**clear** clears the entire queue and any currently attacking groups\n**skip** will skip the currently attacking group e.g. if someone is afk",
+    "usage": ["tt queue", "tt queue show", "tt queue clear", "tt queue skip"]
+  },
+  "taptitans unqueue": {
+    "desc": "Allows you to unqueue from the current raid queue.",
+    "usage": ["tt unqueue"]
+  },
+  "taptitans done": {
+    "desc": "Allows you to mark your current raid attack as complete.\nIf the queue is still ongoing, you can queue back up at the end.\nWon't work if you're not attacking.",
+    "usage": ["tt done"]
+  },
+  "taptitans tournament": {
+    "desc": "Displays a forecast of upcoming Tap Titans 2 tournaments.\nIcon colour will change depending on tournament status. Blue for open and red for closed.\nYou can extend the forecast by up to 10 tournaments.\nRunning the command without **s** on the end will display current tournament only.",
+    "usage": [
+      "tt tournament",
+      "tt tournaments",
+      "tt tournaments <amount>",
+      "tt tournaments 10"
+    ]
+  },
+  "taptitans bonuses": {
+    "desc": "Displays a list of possible tournament bonuses for Tap Titans Tournaments.",
+    "usage": ["tt bonuses"]
+  },
+  "taptitans card": {
+    "desc": "Displays information about a tap titans card.\nNot specifying a card will show a list.\nYou can search by acronym, too.",
+    "usage": ["tt card", "tt card <name>", "tt card <acronym>"]
+  },
+  "taptitans deck": {
+    "desc": "Displays information about a curated selection of tap titans decks.\nWill display a list of available decks if you don't specify one.",
+    "usage": ["tt deck", "tt deck <name>"]
+  },
+  "taptitans optimizers": {
+    "desc": "Displays links to popular taptitans optimizers.",
+    "usage": ["tt opti"]
+  },
+  "taptitans compendium": {
+    "desc": "Displays a link to the tap titans compendium.",
+    "usage": ["tt compendium"]
+  },
+  "taptitans titancount": {
+    "desc": "Displays titan count at a given stage.\nYou can optionally supply all of your stats.\nLater I'll let you record them.",
+    "usage": ["tt titancount", "tt titancount <stage> <ip> <ab> <snap>"]
+  },
+  "taptitans edskip": {
+    "desc": "Shows you the optimal level of ED that you need, given the information available.\nNote here that optimal means a full SC splash with 1 snap active.\n**mi** = mystic impact\n**ab** = arcane bargain\n**mech_sw** = mechanized sword multiplier e.g. 0.75\n**angelic_gu** - angelic guardian unlocked (true/false)\n**anno_pl** = anniversary platinum set multiplier e.g. 1.23\n\nNote: using **tt my set <itemset> yes** you can set these to unlocked, and same for ms/ip/ab with **tt my <stat> <amount>**",
+    "usage": [
+      "tt ed",
+      "tt ed <stage> <ip> <mi> <ab> <mech_sw> <angelic_gu> <anno_pl>"
+    ]
+  },
+  "taptitans skill": {
+    "desc": "Shows you information about a skill and its effects.\nEntering a level will show you the cost for that level as well as total accumulated SP cost.",
+    "usage": [
+      "tt skills",
+      "tt skill <skill>",
+      "tt skill co",
+      "tt skill <skill> <level>",
+      "tt skill assassinate 20"
+    ]
+  },
+  "taptitans convert": {
+    "desc": "Converts a tap titans letter notation number to the master race: scientific notation.",
+    "usage": ["tt convert <value>", "tt convert 1masterrace"]
+  },
+  "taptitans gold": {
+    "desc": "Displays information about a tap titans gold source and what artifacts you need to make it work.\nNot supplying an argument will show available gold types.",
+    "usage": ["tt gold", "tt gold <type>", "tt gold chesterson"]
+  },
+  "taptitans build": {
+    "desc": "Allows you to automagically generate a skill tree for the given build + gold type.\nThis will pull off your ms stat if you have set it with **tt my ms <stage>**.\n\nDisclaimer: this command is still very early alpha and so builds are not that great. They're not terrible either, though.",
+    "usage": ["tt build <damage> <gold> <sp>", "tt build sc fairy 2200"]
+  },
+  "taptitans my": {
+    "desc": "A suite of commands to help you manage your TT2 stats that you have stored with the bot.",
+    "usage": [
+      "tt my code <supportcode>",
+      "tt my <stat> <count>",
+      "tt my <itemset> <yes/no>"
+    ]
+  },
+  "taptitans my profile": {
+    "desc": "Shows your tap titans stats that you recorded with the bot.",
+    "usage": ["tt my profile", "tt my profile <user>"]
+  },
+  "seen": {
+    "desc": "Displays information about when the bot last saw a person.",
+    "usage": ["seen <user>"]
+  },
+  "settings prefix": {
+    "desc": "Allows you to set a guild-wide custom prefix.\nMust be 2 characters in length and can only be non-alphanumerals.",
+    "usage": ["set prefix <prefix>", "set prefix $"]
+  },
+  "settings starboard": {
+    "desc": "Lets you set up a starboard in the server. Specify the channel that the starboard will appear in.",
+    "usage": ["set starboard <channel>"]
+  },
+  "settings worldchat": {
+    "desc": "Allows your guild to participate in a world chat!\nMessages will be censored by default.",
+    "usage": ["set worldchat <channel>"]
+  },
+  "settings wccensor": {
+    "desc": "Enable or disable the censor for the world chat.\nKeep in mind the censor is not perfect.",
+    "usage": ["set wccensor <toggle>", "set wccensor False"]
+  },
+  "settings role": {
+    "desc": "Allows you to set a specified role setting to a given role.\nRunning the command without any roles will show you what is available to set.",
+    "usage": ["settings role <type> <role>", "settings role auto @test-role"]
+  },
+  "settings channel": {
+    "desc": "A command",
+    "usage": [
+      "settings channel <channeltype> <channel>",
+      "settings channel poll #poll-channel"
+    ]
+  },
+  "settings automod": {
+    "desc": "Allows you to specify automatic moderator actions based off warning count (offenses).\nCan trigger a mute, kick, or ban.",
+    "usage": [
+      "settings automod <kind> <offense-count>",
+      "settings automod kick 5"
+    ]
+  },
+  "settings logging": {
+    "desc": "Allows you to choose which channel a certain kind of log goes into.\nSeparate from mod logs.",
+    "usage": [
+      "set logging <kind> <channel>",
+      "set logging avatars #user-avatars"
+    ]
+  },
+  "settings greet": {
+    "desc": "Allows you to set a custom greet message for the server.\nYou can also use this to set the greet channel.",
+    "usage": [
+      "set greet <key> <value>",
+      "set greet message 'Hey there {user}!",
+      "set greet channel #welcome-channel"
+    ]
+  },
+  "settings goodbye": {
+    "desc": "Allows you to set a custom goodbye message for the server.\nYou can also use this to set a goodbye channel.",
+    "usage": [
+      "set goodbye <key> <value>",
+      "set goodbye message 'Thanks for the fish, {user}!'",
+      "set greet channel #goodbye-channel"
+    ]
+  },
+  "toggle": {
+    "desc": "Allows you to toggle a feature of the bot on or off.\nAll features default to off to protect the sanctity of the Christian Minecraft servers we know and love.\nDoes not fully disable a module. To do that, use **{ctx.prefix}help disable**",
+    "usage": ["toggle <setting> <on/off>", "toggle worldchat off"]
+  },
+  "pprefix": {
+    "desc": "Allows you to specify your very own custom, personal prefix.\nOnly works when the server you're on has toggled this feature on.",
+    "usage": ["pprefix <prefix>", "pprefix silly"]
+  },
+  "help": {
+    "desc": "Well isn't this helpful?"
+  },
+  "worldchat": {
+    "desc": "Allows the server to participate in a world chat!\nBad words are censored by default, and images are not sent.\nDisable the censor to see bad words.\nDisclaimer: I will not be held accountable for any bad content. Disable the censor at your own discretion."
+  },
+  "sar": {
+    "desc": "Self-assigned roles are a fun way to allow users to flare their usernames without you having to manage roles."
+  },
+  "sar group": {
+    "desc": "Shows you what self-assignable role groups are in the server (if there are any).",
+    "usage": ["sar groups"]
+  },
+  "sar group create": {
+    "desc": "Creates a self-assignable role group, of which each guild can have up to 5.\nNot to be confused with **{ctx.prefix}sar group add**.",
+    "usage": ["sar group create <name>", "sar group create Animals"]
+  },
+  "sar group delete": {
+    "desc": "Deletes a self-assignable role group from the guild.\nNot to be confused with **{ctx.prefix}sar group remove**.",
+    "usage": ["sar group delete <name>", "sar group delete Animals"]
+  },
+  "timer": {
+    "desc": "Sets a timer for the given time from now. Pings you in the channel that you set it.\nYou can have up to 5 timers per guild.",
+    "usage": ["timer 20s"]
+  },
+  "music": {
+    "desc": "For the musical ones. Support the bot and get access to this module! Plays Youtube and allows you to queue up tracks!"
+  },
+  "utility": {
+    "desc": "A bunch of random stuff that I couldn't quite find a home for."
+  },
+  "ping": {
+    "desc": "Tells you the ping. Duh!",
+    "usage": ["ping"]
+  }
 }

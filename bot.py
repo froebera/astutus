@@ -13,6 +13,36 @@ from discord.utils import get
 from modules.utils.checks import user_has_role
 # from modules.webserver.app import app
 
+extensions = [
+    "autorole",
+    "censor",
+    "channels",
+    "curation",
+    "disable",
+    "fun",
+    "greet",
+    "help",
+    "info",
+    "logging",
+    "math",
+    "moderation",
+    # "music",
+    # "patrons",
+    "postgre",
+    # "premium",
+    "restrictions",
+    "sar",
+    "settings",
+    "setup",
+    "starboard",
+    "timers",
+    "todo",
+    "tracking",
+    "tt",
+    "utility",
+    "worldchat",
+    "xp"
+]
 
 async def prefix_callable(bot, message) -> list:
     """Setup the bot prefix function."""
@@ -56,11 +86,11 @@ class AstutusBot(cmds.AutoShardedBot):
 
     def load_extensions(self):
         """Load the bot's extension modules."""
-        extensions = [
-            f.replace(".py", "")
-            for f in listdir(self.config["DEFAULT"]["cogs"])
-            if isfile(join(self.config["DEFAULT"]["cogs"], f))
-        ]
+        # extensions = [
+        #     f.replace(".py", "")
+        #     for f in listdir(self.config["DEFAULT"]["cogs"])
+        #     if isfile(join(self.config["DEFAULT"]["cogs"], f))
+        # ]
         for extension in extensions:
             print(extension)
             try:
@@ -115,10 +145,15 @@ class AstutusBot(cmds.AutoShardedBot):
         elif isinstance(error, cmds.BotMissingPermissions):
             perms = ", ".join([f"**{perm}**" for perm in error.missing_perms])
             await ctx.send(f":warning: I need permission to {perms} for this to work.")
+        
+        elif isinstance(error, cmds.MissingRequiredArgument):
+            # TODO Find usage for cmd ?
+            await ctx.send(f":negative_squared_cross_mark: {error}")
 
         else:
             print(error)
             await ctx.send(f":warning: Something went wrong... Please contact the Bot author. {str(error)}")
+            raise error
 
     async def process_commands(self, message: discord.Message):
         ctx = await self.get_context(message)
