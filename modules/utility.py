@@ -178,7 +178,7 @@ class UtilityModule(cmd.Cog):
     @cmd.command(name="source", aliases=["sourcecode", "github", "git"])
     async def source(self, ctx):
         await ctx.send(
-            "How nice that you want to contribute! <https://github.com/lxmcneill/astutus>"
+            "How nice that you want to contribute! <https://github.com/froebera/notbots>"
         )
 
     @cmd.command(hidden=True)
