@@ -26,14 +26,19 @@ class InfoModule(cmd.Cog):
             user = ctx.author.id
         user = await self.bot.fetch_user(user)
         cached = await self.bot.db.hget("avatar_cache", user.id)
+        # if not cached or cached is None:
+        #     url = user.avatar_url_as(static_format="png", size=1024)
+        #     urls = str(url).split("/")[-1].split("?")[0]
+        #     ctype, _ = mimetypes.guess_type(urls)
+        #     ext = ctype.split("/")[-1]
+        #     i = await self.bot.cdn.upload_file("u", user.id, url, ext, ctype)
+        #     await self.bot.db.hset("avatar_cache", user.id, i)
+        #     cached = i
+
         if not cached or cached is None:
             url = user.avatar_url_as(static_format="png", size=1024)
-            urls = str(url).split("/")[-1].split("?")[0]
-            ctype, _ = mimetypes.guess_type(urls)
-            ext = ctype.split("/")[-1]
-            i = await self.bot.cdn.upload_file("u", user.id, url, ext, ctype)
-            await self.bot.db.hset("avatar_cache", user.id, i)
-            cached = i
+            await self.bot.db.hset("avatar_cache", user.id, url)
+            cached = url
         return cached, user
 
     async def get_or_upload_guildicon(self, guild):
@@ -93,6 +98,7 @@ class InfoModule(cmd.Cog):
             user = await choose_item(ctx, "member", ctx.guild, " ".join(user).lower())
         else:
             user = ctx.author
+        
         cached, user = await self.get_or_upload_avatar(ctx, user.id)
         async with ctx.typing():
             embed = discord.Embed(title=f"**{user}**'s avatar")
@@ -276,7 +282,7 @@ class InfoModule(cmd.Cog):
         embed.title = f"{emoji} {self.bot.user}"
         embed.description = "Please insert coin to continue."
         embed.color = 0x473080
-        
+
         embed.set_thumbnail(url=emoji.url)
         embed.add_field(
             name="Author",
