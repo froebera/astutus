@@ -538,8 +538,11 @@ class ModerationModule(cmd.Cog):
     @cmd.Cog.listener()
     async def on_guild_role_update(self, b, a):
         r = await self.get_or_create_muted_role(b.guild)
-        if b.id == r.id:
-            await self.mute_muted_role(r, b.guild)
+        try:
+            if b.id == r.id:
+                await self.mute_muted_role(r, b.guild)
+        except AttributeError:
+            print("No muted role defined")
 
     @cmd.Cog.listener()
     async def on_guild_role_delete(self, r):
