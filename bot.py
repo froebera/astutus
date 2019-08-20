@@ -116,6 +116,10 @@ class AstutusBot(cmds.AutoShardedBot):
             perms = ", ".join([f"**{perm}**" for perm in error.missing_perms])
             await ctx.send(f":warning: I need permission to {perms} for this to work.")
 
+        else:
+            print(error)
+            await ctx.send(f":warning: Something went wrong... Please contact the Bot author. {str(error)}")
+
     async def process_commands(self, message: discord.Message):
         ctx = await self.get_context(message)
         if ctx.command is None or ctx.author.bot or not getattr(ctx, "guild"):
