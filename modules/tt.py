@@ -580,21 +580,27 @@ class TapTitansModule(cmd.Cog):
         spawn = groupdict.get("spawn", None)
         cooldown = groupdict.get("cd", None)
         reset = int(groupdict.get("reset", 0))
-        
+        timer = None
+
         if cooldown is not None:
             cdn = arrow.get(cooldown)
+            timer = cdn
             if cdn > now:
                 text = "cooldown ends in"
                 hms = await get_hms(cdn - now)
             
         elif spawn is not None:
             spwn = arrow.get(spawn).shift(hours=12 * reset)
+            timer = spwn
             hms = await get_hms(spwn - now)
             if reset:
                 text = f"reset #{reset} starts in"
         
         embed = await self.bot.embed()
-        embed.timestamp = spwn.datetime
+        
+        if timer is not None:
+            embed.timestamp = timer.datetime
+
         embed.description = TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
         embed.set_footer(text=f"{text[:-3]}", icon_url=ctx.guild.me.avatar_url)
         await ctx.send(embed=embed)
