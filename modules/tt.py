@@ -130,7 +130,8 @@ class TapTitansModule(cmd.Cog):
         self.aliases = ["tt"]
 
         self.raid_timer.start()
-        self.em = 440785686438871040
+        # self.em = 440785686438871040
+        self.em = 612910979189047325
         for k, val in TT_CSV_FILES.items():
             setattr(self, k, [])
             with open(f"modules/data/{val}Info.csv") as csvfile:
