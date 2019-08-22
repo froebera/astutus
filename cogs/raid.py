@@ -3,6 +3,7 @@
 #group some coroutines
 #errorhandling in timer loop
 #remove verbose printlns
+#reorganize command groups
 
 from discord.ext import tasks
 from discord.ext import commands
