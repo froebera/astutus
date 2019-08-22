@@ -1,3 +1,9 @@
+#TODO:
+#use converter for queue/unqueue
+#group some coroutines
+#errorhandling in timer loop
+#remove verbose printlns
+
 from discord.ext import tasks
 from discord.ext import commands
 from discord.utils import get
@@ -34,6 +40,13 @@ class QueueConfigKey(commands.Converter):
         
         raise commands.BadArgument(f"Config key must be one of {', '.join(QUEUE_CONFIG_KEYS)} ")
 
+class RaidConfigKey(commands.Converter):
+    async def convert(self, ctx, argument):
+        if argument in RAID_CONFIG_KEYS:
+            return argument
+
+        raise commands.BadArgument(f"Config key must be one of {', '.join(RAID_CONFIG_KEYS)} ")
+
 TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 QUEUE_CONFIG_KEY = "raid:{}:queue:{}"
 RAID_CONFIG_KEY = "raid:{}"
@@ -51,6 +64,9 @@ RAID_ANNOUNCEMENTCHANNEL = "channel"
 RAID_SPAWN = "spawn"
 RAID_RESET = "reset"
 RAID_COUNTDOWNMESSAGE = "countdown_message"
+RAID_MANAGEMENT_ROLES = "management_roles"
+
+RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES]
 
 ALIAS_SKIP = ["skip"]
 ALIAS_SHOW = ["show"]
@@ -263,15 +279,15 @@ class RaidModule(commands.Cog):
         # raid:{guildid}
         # input = get(ctx.guild.channels, id=612922052571168779)
         # print(chan)
-        chan = await commands.TextChannelConverter().convert(ctx, "612922052571168779")
-        chanid = chan.id
+        # chan = await commands.TextChannelConverter().convert(ctx, "612922052571168779")
+        # chanid = chan.id
 
         # TODO ensure unique entries in q list only, or use set?
         await self.bot.db.delete(f"raid:{ctx.guild.id}:queues")
 
         # raid.{guildid}:channel = chanid
 
-        channsaveres = await self.bot.db.hset(f"raid:{ctx.guild.id}", "channel", chanid)
+        # channsaveres = await self.bot.db.hset(f"raid:{ctx.guild.id}", "channel", chanid)
 
         await self.bot.db.rpush(f"raid:{ctx.guild.id}:queues", "default")
         default_queue_key = f"raid:{ctx.guild.id}:queue:default"
@@ -280,7 +296,7 @@ class RaidModule(commands.Cog):
 
         # channel = ctx.guild.get_channel(chanid)
         # await channel.send("Hello from raid setup")
-        await ctx.send(f"raid setup done :) {channsaveres}")
+        await ctx.send(f"raid setup done :)")
 
     # TODO requires check if any raid is active / params for when the raid starts
     @raid.command(name="in")
@@ -437,14 +453,53 @@ class RaidModule(commands.Cog):
     async def raidconfig(self, ctx):
         await ctx.send("Raidconfig list")
 
-    @raidconfig.command(name="edit")
-    async def raidconfig_edit(self, ctx):
-        await ctx.send("Raidconfig edit")
+    @raidconfig.command(name="show")
+    async def raidconfig_show(self, ctx):
+        raid_configuration = await self.get_raid_configuration(ctx.guild.id)
+        #TODO do some formatting for the output
+        tmp = []
+        for config_key in RAID_CONFIG_KEYS:
+            config_value = raid_configuration.get(config_key, None)
+            tmp.append(f"{config_key}: {config_value}")
+            
+        await ctx.send("**Raid configuration:**\n\n{}".format('\n'.join(tmp)))
 
+    @raidconfig.command(name="set")
+    async def raidconfig_set(self, ctx, config_key: typing.Union[RaidConfigKey], *value):
+        # await ctx.send("Raidconfig set")
+
+        if not value:
+            raise commands.BadArgument("value is a required argument that is missing")
+
+        val = None
+        formatted_value = None
+
+        if config_key in [RAID_ANNOUNCEMENTCHANNEL]:
+            if config_key == RAID_ANNOUNCEMENTCHANNEL:
+                channel = await commands.TextChannelConverter().convert(ctx, value[0])
+                val = channel.id
+                formatted_value = f"**{channel.mention}**"
+        
+        elif config_key in [RAID_MANAGEMENT_ROLES]:
+            roles = []
+            for v in value:
+                role = await commands.RoleConverter().convert(ctx, v)
+                roles.append(role)
+            val = " ".join([
+                "{}".format(role.id)
+                for role in roles
+            ])
+            formatted_value = " ".join([
+                "@**{}**".format(role) for role in roles
+            ])
+            print(val)
+
+        await self.bot.db.hset(RAID_CONFIG_KEY.format(ctx.guild.id), config_key, val)
+        await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else val}")
+        
     @commands.group(name="queueconfig", invoke_without_command=True)
     async def queueconfig(self, ctx):
-        await ctx.send("Queueconfig list")
-
+        pass
 
 # raidconfig:
 #     raidconfig show
@@ -475,7 +530,6 @@ class RaidModule(commands.Cog):
             return_exceptions=True
         )
 
-
         tmp = []
         for i, queue_configuration in enumerate(queue_configurations):
             tmp.append(f"Config values for queue **{queues[i]}** ({queue_configuration.get(QUEUE_NAME)}):")
@@ -491,7 +545,6 @@ class RaidModule(commands.Cog):
     async def queueconfig_set(self, ctx, queue: typing.Optional[Queue], config_key: typing.Union[QueueConfigKey], value):
         if not queue:
             queue = "default"
-        await ctx.send(f"{queue}, {config_key}, {value}")
 
         if config_key in [QUEUE_SIZE]:
             try:
@@ -500,8 +553,37 @@ class RaidModule(commands.Cog):
                 raise commands.BadArgument(f"Cannot set **{config_key}** to **{value}**. Integer required")
 
         await self.bot.db.hset(QUEUE_CONFIG_KEY.format(ctx.guild.id, queue), config_key, value)
-        await ctx.send(f":white_check_mark: Successfully set **{config_key}** to **{value}** for queue **{queue}**")
+        await ctx.send(f":white_check_mark: Successfully set **{config_key}** to **{value}** for queue **{queue}**")  
 
+    @queueconfig.command(name="create")
+    async def queueconfig_create(self, ctx, queue_name, queue_size: int):
+        queues = await self.get_all_raid_queues(ctx.guild.id)
+
+        if queue_name in queues:
+            raise commands.BadArgument(f"**{queue_name}** already exits!")
+
+        q_key = f"raid:{ctx.guild.id}:queue:{queue_name}"
+        await self.bot.db.rpush(f"raid:{ctx.guild.id}:queues", queue_name)
+        await self.bot.db.hset(q_key, QUEUE_SIZE, queue_size)
+
+
+
+    @queueconfig.command(name="delete")
+    async def queueconfig_delete(self, ctx, queue_name: typing.Union[Queue]):
+        if queue_name == "default":
+            raise commands.BadArgument("Cannot delete default queue")
+
+        q_key = f"raid:{ctx.guild.id}:queue:{queue_name}"
+        await self.bot.db.delete(q_key)
+        await self.bot.db.lrem(f"raid:{ctx.guild.id}:queues", queue_name)
+
+    @queueconfig.command(name="start")
+    async def queueconfig_start(self, ctx, queue_name: typing.Union[Queue]):
+        if queue_name == "default":
+            raise commands.BadArgument("Cannot manually start the default queue")
+
+        await self.bot.db.hset(QUEUE_CONFIG_KEY.format(ctx.guild.id, queue_name), QUEUE_ACTIVE, 1)
+        await ctx.send(f"Started queue blubb") 
 
     async def get_all_raid_queues(self, guild_id):
         return await self.bot.db.lrange(f"raid:{guild_id}:queues")
