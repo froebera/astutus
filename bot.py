@@ -232,8 +232,8 @@ class AstutusBot(cmds.AutoShardedBot):
         """Attempt to forcefully stop the bot."""
         if force:
             sys.exit(exit_code)
-        self.db.disconnect()
-        self.loop.stop()
+        await self.db.disconnect()
+        await self.loop.stop()
         self.exit_code = exit_code
 
     def run(self):
