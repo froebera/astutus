@@ -106,7 +106,7 @@ class SettingsModule(cmd.Cog):
     @settings.command(name="role")
     @checks.is_mod()
     @checks.bot_has_perms(manage_roles=True)
-    async def role(self, ctx, roletype, *role):
+    async def role(self, ctx, roletype="", *role):
         roletypes = "auto muted jailed curator".split()
         if roletype.lower() not in roletypes:
             raise cmd.BadArgument(
@@ -117,14 +117,14 @@ class SettingsModule(cmd.Cog):
         if role:
             role = await choose_item(ctx, "role", ctx.guild, " ".join(role).lower())
         if role is None or not role:
-            raise cmd.BadArgument("Could not find a role with that name.")
+            raise cmd.BadArgument(f"Could not find a role with that name.")
         await self.bot.db.hset(f"{ctx.guild.id}:set", f"role{roletype}", role.id)
         await ctx.send(f":white_check_mark: Set **{roletype} role** to @**{role}**")
 
     @settings.command(name="channel")
     @checks.is_mod()
     @checks.bot_has_perms(manage_channels=True)
-    async def channel(self, ctx, channeltype, *channel):
+    async def channel(self, ctx, channeltype="", *channel):
         channeltypes = "poll staff music worldchat starboard greet goodbye".split()
         if channeltype.lower() not in channeltypes:
             raise cmd.BadArgument(
@@ -146,7 +146,7 @@ class SettingsModule(cmd.Cog):
     @settings.command(name="automod")
     @checks.is_mod()
     @checks.bot_has_perms(manage_roles=True)
-    async def automod(self, ctx, modtype, count: int):
+    async def automod(self, ctx, modtype="", *count: int):
         modtypes = "mute kick ban".split()
         if modtype.lower() not in modtypes:
             raise cmd.BadArgument(
@@ -163,7 +163,7 @@ class SettingsModule(cmd.Cog):
 
     @settings.command(name="logging", aliases=["log"])
     @checks.is_mod()
-    async def logging(self, ctx, logtype, *channel):
+    async def logging(self, ctx, logtype="", *channel):
         logtypes = "mod joins leaves edits deletes avatars channels roles pins commands".split()
         if logtype.lower() not in logtypes:
             raise cmd.BadArgument(
