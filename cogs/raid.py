@@ -5,14 +5,16 @@
 #remove verbose printlns
 #reorganize command groups
 
+#TODO CHECK IF QUEUE STILL WORKS
+
 from discord.ext import tasks
 from discord.ext import commands
 from discord.utils import get
 from datetime import timedelta
 from itertools import zip_longest
 from .utils.converters import Queue
-from .utils.time import Duration
-from .utils.checks import raidconfig_exists
+from .utils.time import Duration, get_hms
+from .utils.checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod
 from .utils.config_keys import *
 import typing
 import asyncio
@@ -56,16 +58,8 @@ TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 ALIAS_SKIP = ["skip"]
 ALIAS_SHOW = ["show"]
 ALIAS_CLEAR = ["clear"]
-RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES]
-QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE]
-
-
-def get_hms(delta: timedelta):
-    total_seconds = int(delta.total_seconds())
-    hours, remainder = divmod(total_seconds, 60 * 60)
-    minutes, seconds = divmod(remainder, 60)
-    return hours, minutes, seconds
-
+RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]
+QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
 
 class RaidModule(commands.Cog):
     def __init__(self, bot):
@@ -158,8 +152,8 @@ class RaidModule(commands.Cog):
                             if member.mention not in to_ping:
                                 to_ping.append(member.mention)
 
-                    await announcement_channel.send("Set the raid timer!\n{}".format(', '.join(to_ping)))
                     await self.bot.db.hset(RAID_CONFIG_KEY.format(guild.id), RAID_REMINDED, 1)
+                    await announcement_channel.send("Set the raid timer!\n{}".format(', '.join(to_ping)))
             else:
                 arr = cdn - now
                 hms = get_hms(arr)
@@ -209,6 +203,7 @@ class RaidModule(commands.Cog):
         queue_size = int(queue_config.get(QUEUE_SIZE, 0))
         queue_in_progress = int(queue_config.get(QUEUE_PROGRESS, 0))
         queue_name = queue_config.get(QUEUE_NAME, None)
+        queue_ping_after = int(queue_config.get(QUEUE_PING_AFTER, 0))
 
         is_active = queue_config.get(QUEUE_ACTIVE, 0)
         if not is_active:
@@ -228,20 +223,18 @@ class RaidModule(commands.Cog):
             return;
 
         if not queue_in_progress:
-            await announcement_channel.send(f"Queue **{queue_name if queue_name else queue}** started, should ping here")
+            await announcement_channel.send(f"Queue **{queue_name if queue_name else queue}** started")
             await self.bot.db.hset(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_PROGRESS, 1)
 
         if queue_size == 0:
-            print("queue size == 0; returning")
-            # what to do here ? 
-            # just leave it for now
-            # set depl to 1
-            # set active to 0
-
-            await self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_PROGRESS)
-            await self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_ACTIVE)
+            await asyncio.gather(
+                self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_PROGRESS),
+                self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_ACTIVE),
+                self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_CURRENT_USERS),
+                self.bot.db.delete(QUEUE_KEY.format(guild.id, queue)),
+                return_exceptions=True
+            )
             await announcement_channel.send("Queue is over")
-
             return
 
         if current_users:
@@ -251,28 +244,28 @@ class RaidModule(commands.Cog):
 
         if not queued_users and not current_users:
             # Queue is over
-            await self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_PROGRESS)
-            await self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_ACTIVE)
-            await announcement_channel.send("Queue is over")
-            print("Queue is over")
+            await asyncio.gather(
+                self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_PROGRESS),
+                self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild.id, queue), QUEUE_ACTIVE),
+                return_exceptions=True
+            )
+
+            ping = ""
+            if queue_ping_after:
+                role = guild.get_role(queue_ping_after)
+                ping = role.mention
+
+            await announcement_channel.send(f"Queue **{queue_name if queue_name else queue}** is over {ping}")
 
         if queued_users:
             next_users = queued_users[0:queue_size]
             queued_members = [guild.get_member(int(memberid)) for memberid in next_users]
-            print(next_users)
-            print(queued_members)
-            i = 0
-            while i < len(next_users):
-                await self.remove_user_from_queue(guild.id, queue, next_users[i])
-                i += 1
-                
-            await self.bot.db.hset(
-                f"raid:{guild.id}:queue:{queue}",
-                QUEUE_CURRENT_USERS,
-                " ".join([str(m.id) for m in queued_members]),
-            )
 
-            print("sending announcement")
+            await asyncio.gather(
+                *(self.remove_user_from_queue(guild.id, queue, next_user) for next_user in next_users),
+                self.bot.db.hset(f"raid:{guild.id}:queue:{queue}", QUEUE_CURRENT_USERS, " ".join([str(m.id)   for m in queued_members])),
+                return_exceptions=True
+            )
 
             await announcement_channel.send(
                 "It's {}'s turn to attack the raid!".format(
@@ -292,6 +285,7 @@ class RaidModule(commands.Cog):
     async def create_on_demand_queue(self, ctx):
         pass
 
+    @is_mod()
     @raid.command(name="setup", description="initial raid config setup")
     async def raid_initial_setup(self, ctx):
         # raid:{guildid}
@@ -320,6 +314,7 @@ class RaidModule(commands.Cog):
 
     @raid.command(name="in")
     @raidconfig_exists()
+    @has_raid_timer_permissions()
     async def raid_in(self, ctx, time: typing.Optional[Duration]):
         raid_config = await self.get_raid_configuration(ctx.guild.id)
         now = arrow.utcnow()
@@ -351,6 +346,7 @@ class RaidModule(commands.Cog):
 
     @raid.command(name="clear")
     @raidconfig_exists()
+    @has_raid_timer_permissions()
     async def raid_clear(self, ctx, duration: typing.Optional[Duration]):
         raid_config = await self.get_raid_configuration(ctx.guild.id)
         spawn = raid_config.get(RAID_SPAWN, 0)
@@ -405,6 +401,7 @@ class RaidModule(commands.Cog):
 
     @raid.group(name="cancel")
     @raidconfig_exists()
+    @has_raid_timer_permissions()
     async def raid_cancel(self, ctx):
         raid_config = await self.get_raid_configuration(ctx.guild.id)
         spawn = raid_config.get(RAID_SPAWN, None)
@@ -561,12 +558,13 @@ class RaidModule(commands.Cog):
         tmp = []
         for config_key in RAID_CONFIG_KEYS:
             config_value = raid_configuration.get(config_key, None)
-            tmp.append(f"{config_key}: {config_value}")
+            tmp.append(f"{config_key}: {self.format_config_value(ctx, config_key, config_value)}")
             
         await ctx.send("**Raid configuration:**\n\n{}".format('\n'.join(tmp)))
 
     @raidconfig.command(name="set")
     @raidconfig_exists()
+    @has_raid_management_permissions()
     async def raidconfig_set(self, ctx, config_key: typing.Union[RaidConfigKey], *value):
         # await ctx.send("Raidconfig set")
 
@@ -582,7 +580,7 @@ class RaidModule(commands.Cog):
                 val = channel.id
                 formatted_value = f"**{channel.mention}**"
         
-        elif config_key in [RAID_MANAGEMENT_ROLES]:
+        elif config_key in [RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]:
             roles = []
             for v in value:
                 role = await commands.RoleConverter().convert(ctx, v)
@@ -638,7 +636,7 @@ class RaidModule(commands.Cog):
             tmp.append(f"Config values for queue **{queues[i]}** ({queue_configuration.get(QUEUE_NAME)}):")
             for config_key in QUEUE_CONFIG_KEYS:
                 config_value = queue_configuration.get(config_key, None)
-                tmp.append(f"{config_key}: {config_value}")
+                tmp.append(f"{config_key}: {self.format_config_value(ctx, config_key, config_value)}")
             
             tmp.append("")
 
@@ -646,21 +644,28 @@ class RaidModule(commands.Cog):
 
     @queueconfig.command(name="set")
     @raidconfig_exists()
-    async def queueconfig_set(self, ctx, queue: typing.Optional[Queue], config_key: typing.Union[QueueConfigKey], value):
+    @has_raid_management_permissions()
+    async def queueconfig_set(self, ctx, queue: typing.Optional[Queue], config_key: typing.Union[QueueConfigKey], v):
         if not queue:
             queue = "default"
 
         if config_key in [QUEUE_SIZE]:
             try:
-                int(value)
+                value = int(v)
+                formatted_value = f"**{value}**"
             except ValueError:
                 raise commands.BadArgument(f"Cannot set **{config_key}** to **{value}**. Integer required")
+        elif config_key in [QUEUE_PING_AFTER]:
+            role = await commands.RoleConverter().convert(ctx, v)
+            value = role.id
+            formatted_value = f"@**{role.name}**"
 
         await self.bot.db.hset(QUEUE_CONFIG_KEY.format(ctx.guild.id, queue), config_key, value)
-        await ctx.send(f":white_check_mark: Successfully set **{config_key}** to **{value}** for queue **{queue}**")  
+        await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else value} for queue **{queue}**")  
 
     @queueconfig.command(name="create")
     @raidconfig_exists()
+    @has_raid_management_permissions()
     async def queueconfig_create(self, ctx, queue_name, queue_size: int):
         queues = await self.get_all_raid_queues(ctx.guild.id)
 
@@ -671,8 +676,11 @@ class RaidModule(commands.Cog):
         await self.bot.db.rpush(f"raid:{ctx.guild.id}:queues", queue_name)
         await self.bot.db.hset(q_key, QUEUE_SIZE, queue_size)
 
+        await ctx.send(f":white_check_mark: Added new queue {queue_name}")
+
     @queueconfig.command(name="delete")
     @raidconfig_exists()
+    @has_raid_management_permissions()
     async def queueconfig_delete(self, ctx, queue_name: typing.Union[Queue]):
         if queue_name == "default":
             raise commands.BadArgument("Cannot delete default queue")
@@ -682,6 +690,7 @@ class RaidModule(commands.Cog):
         await self.bot.db.lrem(f"raid:{ctx.guild.id}:queues", queue_name)
 
     @queueconfig.command(name="start")
+    @has_raid_timer_permissions()
     async def queueconfig_start(self, ctx, queue_name: typing.Union[Queue]):
         if queue_name == "default":
             raise commands.BadArgument("Cannot manually start the default queue")
@@ -720,6 +729,40 @@ class RaidModule(commands.Cog):
         await self.bot.db.delete(QUEUE_KEY.format(guild_id, "default"))
         for k in [QUEUE_ACTIVE, QUEUE_PROGRESS, QUEUE_CURRENT_USERS]:
             await self.bot.db.hdel(QUEUE_CONFIG_KEY.format(guild_id, "default"), k)
+
+    def format_config_value(self, ctx, key, value):
+        if not value:
+            return value
+
+        if "role" in key:
+            role_ids = value.split()
+            
+            formatted_value = "{}".format(
+                ", ".join(
+                    f"@**{ctx.guild.get_role(int(role))}**" for role in role_ids
+                )
+            )
+            # role = ctx.guild.get_role(int(value))
+            # formatted_value = f"@**{role}**"
+            return formatted_value
+        elif "channel" in key:
+            channel = ctx.guild.get_channel(int(value))
+            formatted_value = channel.mention
+            return formatted_value
+        else:
+            return value
+
+    @is_mod()
+    @commands.command(name="delmng")
+    async def delete_mng (self, ctx):
+        await self.bot.db.hdel(RAID_CONFIG_KEY.format(ctx.guild.id), RAID_MANAGEMENT_ROLES)
+        await ctx.send("Cleared management roles")
+
+    @is_mod()
+    @commands.command(name="deltmr")
+    async def delete_tmr (self, ctx):
+        await self.bot.db.hdel(RAID_CONFIG_KEY.format(ctx.guild.id), RAID_TIMER_ROLES)
+        await ctx.send("Cleared timer roles")
 
 def setup(bot):
     bot.add_cog(RaidModule(bot))

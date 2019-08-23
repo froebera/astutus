@@ -42,7 +42,7 @@ class Duration(cmd.Converter):
         return res
 
 
-async def get_hms(delta: timedelta):
+def get_hms(delta: timedelta):
     total_seconds = int(delta.total_seconds())
     hours, remainder = divmod(total_seconds, 60 * 60)
     minutes, seconds = divmod(remainder, 60)

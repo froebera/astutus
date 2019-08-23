@@ -1,6 +1,5 @@
 from discord.ext import commands
-from modules.utils.redis import Redis
-import modules.utils.redis_connection as redis_conn
+import cogs.utils.redis_connection as redis_conn
 import asyncio
 import configparser
 
