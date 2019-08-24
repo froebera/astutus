@@ -5,7 +5,6 @@ import configparser
 
 extensions = [
     "cogs.raid",
-    "cogs.test",
     # "cogs.help"
 ]
 
