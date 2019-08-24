@@ -85,14 +85,6 @@ class RaidModule(commands.Cog):
         )
 
     async def handle_raid_timer_for_guild(self, guild, now):
-        # print("starting timer handler")
-        # print("current guild {}, now: {}".format(guild, now))
-        """
-            TODO
-                update raid timer message
-                handle raid queue
-                handle on demand queues
-        """
         current_raid_config = await self.get_raid_configuration(guild.id)
         if not current_raid_config:
             raise asyncio.CancelledError
@@ -125,14 +117,13 @@ class RaidModule(commands.Cog):
                     "Error while fetching timer message. Respawning timer..."
                 )
                 await self.bot.db.hset(
-                    f"raid:{guild.id}", "countdown_message", countdown_message.id
+                    f"raid:{guild.id}", RAID_COUNTDOWNMESSAGE, countdown_message.id
                 )
 
         if countdown_message is None and spawn:
-            print("creating countdown message")
             countdown_message = await announcement_channel.send("Respawning timer ...")
             await self.bot.db.hset(
-                f"raid:{guild.id}", "countdown_message", countdown_message.id
+                f"raid:{guild.id}", RAID_COUNTDOWNMESSAGE, countdown_message.id
             )
 
         if cooldown is not None:
@@ -177,13 +168,16 @@ class RaidModule(commands.Cog):
                 text = f"reset #{reset} starts in"
 
             if now > next_spawn:
-                print("activating default queue")
                 is_default_queue_active = await self.bot.db.hget(
-                     f"raid:{guild.id}:queue:default", "active"
+                     f"raid:{guild.id}:queue:default", QUEUE_ACTIVE
                 )
                 if not is_default_queue_active:
-                    await self.bot.db.hset(f"raid:{guild.id}:queue:default", "active", 1)
+                    await self.bot.db.hset(f"raid:{guild.id}:queue:default", QUEUE_ACTIVE, 1)
                 await self.bot.db.hset(RAID_CONFIG_KEY.format(guild.id), RAID_RESET, reset + 1)
+                countdown_message = await announcement_channel.send("Respawning timer ...")
+                await self.bot.db.hset(
+                    f"raid:{guild.id}", RAID_COUNTDOWNMESSAGE, countdown_message.id
+                )
 
             await countdown_message.edit(
                 content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
@@ -273,7 +267,7 @@ class RaidModule(commands.Cog):
                 )
             )
 
-    @commands.group(name="raid", aliases=["r"])
+    @commands.group(name="raid", aliases=["r"], description="Contains all the raid stuff like setup, configuration etc", brief="Contains all the raid stuff")
     async def raid(self, ctx):
         pass
 
@@ -286,33 +280,31 @@ class RaidModule(commands.Cog):
         pass
 
     @is_mod()
-    @raid.command(name="setup", description="initial raid config setup")
+    @raid.command(name="setup",description="Initial raid setup", brief="Initial raid setup")
     async def raid_initial_setup(self, ctx):
-        # raid:{guildid}
-        # input = get(ctx.guild.channels, id=612922052571168779)
-        # print(chan)
-        # chan = await commands.TextChannelConverter().convert(ctx, "612922052571168779")
-        # chanid = chan.id
+        exists = await self.bot.db.exists(RAID_CONFIG_KEY.format(ctx.guild.id))
 
-        # TODO ensure unique entries in q list only, or use set?
-        await self.bot.db.delete(f"raid:{ctx.guild.id}:queues")
+        if exists:
+            raise commands.BadArgument("Raids have been set up alread :)")
 
-        # raid.{guildid}:channel = chanid
-
-        # channsaveres = await self.bot.db.hset(f"raid:{ctx.guild.id}", "channel", chanid)
-
-        await self.bot.db.rpush(f"raid:{ctx.guild.id}:queues", "default")
         default_queue_key = f"raid:{ctx.guild.id}:queue:default"
-        await self.bot.db.hset(default_queue_key, QUEUE_NAME, "Reset Queue")
-        await self.bot.db.hset(default_queue_key, QUEUE_SIZE, 1)
+        
+        await asyncio.gather(
+            self.bot.db.rpush(f"raid:{ctx.guild.id}:queues", "default"),
+            self.bot.db.hset(default_queue_key, QUEUE_NAME, "Reset Queue"),
+            self.bot.db.hset(default_queue_key, QUEUE_SIZE, 1),
+            self.bot.db.hset(RAID_CONFIG_KEY.format(ctx.guild.id), RAID_INIT, 0),
+            return_exceptions=True
+        )
 
-        await self.bot.db.hset(RAID_CONFIG_KEY.format(ctx.guild.id), RAID_INIT, 0)
+        await ctx.send(f":white_check_mark: Raid setup done :)")
 
-        # channel = ctx.guild.get_channel(chanid)
-        # await channel.send("Hello from raid setup")
-        await ctx.send(f"raid setup done :)")
-
-    @raid.command(name="in")
+    @raid.command(
+        name="in",
+        description="Setup next raid spawn",
+        brief=f"Setup next raid spawn",
+        help="Parameter time is optional. If time is not supplied, next spawn will be set to 24h from now.\nRequires raid announcement_channel to be set\nRequires raid to be set up"
+    )
     @raidconfig_exists()
     @has_raid_timer_permissions()
     async def raid_in(self, ctx, time: typing.Optional[Duration]):
@@ -329,7 +321,7 @@ class RaidModule(commands.Cog):
             time = now.shift(hours=24)
 
         if not announcement_channel:
-            raise commands.BadArgument("No announcementchannel configured")
+            raise commands.BadArgument("No announcement channel configured")
 
         if cooldown:
             cdn = arrow.get(cooldown)
@@ -382,7 +374,7 @@ class RaidModule(commands.Cog):
         _h2, _m2, _s2 = get_hms(total_time)
         cleared = f"**{_h2}**h **{_m2}**m **{_s2}**s"
         await ctx.send(
-            "Rraid **cleared** in {}.".format(cleared)
+            "Raid **cleared** in {}.".format(cleared)
         )
 
         await self.clear_current_raid(ctx.guild.id)
@@ -592,7 +584,6 @@ class RaidModule(commands.Cog):
             formatted_value = " ".join([
                 "@**{}**".format(role) for role in roles
             ])
-            print(val)
 
         await self.bot.db.hset(RAID_CONFIG_KEY.format(ctx.guild.id), config_key, val)
         await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else val}")
