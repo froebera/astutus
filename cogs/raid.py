@@ -126,7 +126,6 @@ class RaidModule(commands.Cog):
                 countdown_message = await announcement_channel.send(
                     "Error while fetching timer message. Respawning timer..."
                 )
-
                 await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
 
 
