@@ -9,7 +9,6 @@ class Queue(commands.Converter):
             f"raid:{ctx.guild.id}:queues"
         )
         if not argument in queues:
-            print("raising exception")
             raise commands.BadArgument(
                 f"Queue **{argument}** does not exist. Available queues: {', '.join(queues)}"
             )

@@ -18,6 +18,10 @@ def raidconfig_exists():
 
 def has_raid_management_permissions():
     async def predicate(ctx):
+        is_owner = await ctx.bot.is_owner(ctx.author)
+        if is_owner:
+            return True
+
         raid_management_roles = await get_redis_connection().hget(
             RAID_CONFIG_KEY.format(ctx.guild.id), RAID_MANAGEMENT_ROLES
         )
@@ -42,6 +46,10 @@ def has_raid_management_permissions():
 
 def has_raid_timer_permissions():
     async def predicate(ctx):
+        is_owner = await ctx.bot.is_owner(ctx.author)
+        if is_owner:
+            return True
+
         raid_configuration = await get_redis_connection().hgetall(
             RAID_CONFIG_KEY.format(ctx.guild.id)
         )

@@ -382,7 +382,7 @@ class RaidModule(commands.Cog):
         _h2, _m2, _s2 = get_hms(total_time)
         cleared = f"**{_h2}**h **{_m2}**m **{_s2}**s"
         await ctx.send(
-            "Rraid **cleared** in {}.".format(cleared)
+            "Raid **cleared** in {}.".format(cleared)
         )
 
         await self.clear_current_raid(ctx.guild.id)
@@ -676,7 +676,7 @@ class RaidModule(commands.Cog):
         await self.bot.db.rpush(f"raid:{ctx.guild.id}:queues", queue_name)
         await self.bot.db.hset(q_key, QUEUE_SIZE, queue_size)
 
-        await ctx.send(f":white_check_mark: Added new queue {queue_name}")
+        await ctx.send(f":white_check_mark: Queue **{queue_name}** has been created!")
 
     @queueconfig.command(name="delete")
     @raidconfig_exists()
@@ -688,6 +688,8 @@ class RaidModule(commands.Cog):
         q_key = f"raid:{ctx.guild.id}:queue:{queue_name}"
         await self.bot.db.delete(q_key)
         await self.bot.db.lrem(f"raid:{ctx.guild.id}:queues", queue_name)
+
+        await ctx.send(f":white_check_mark: Queue **{queue_name}** has been deleted!")
 
     @queueconfig.command(name="start")
     @has_raid_timer_permissions()
@@ -751,18 +753,6 @@ class RaidModule(commands.Cog):
             return formatted_value
         else:
             return value
-
-    @is_mod()
-    @commands.command(name="delmng")
-    async def delete_mng (self, ctx):
-        await self.bot.db.hdel(RAID_CONFIG_KEY.format(ctx.guild.id), RAID_MANAGEMENT_ROLES)
-        await ctx.send("Cleared management roles")
-
-    @is_mod()
-    @commands.command(name="deltmr")
-    async def delete_tmr (self, ctx):
-        await self.bot.db.hdel(RAID_CONFIG_KEY.format(ctx.guild.id), RAID_TIMER_ROLES)
-        await ctx.send("Cleared timer roles")
 
 def setup(bot):
     bot.add_cog(RaidModule(bot))
