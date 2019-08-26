@@ -14,10 +14,10 @@ extensions = [
 
 
 async def prefix_callable(b, message) -> list:
-    # user_id = bot.user.id
-    # prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
-    # if message.guild is not None:
-    #     prefix_base.append(bot.config["DEFAULT"]["prefix"])
+    user_id = bot.user.id
+    prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
+    if message.guild is not None:
+        prefix_base.append(bot.config["DEFAULT"]["prefix"])
     #     custom = await bot.db.hget(f"{message.guild.id}:set", "pfx")
     #     if custom or custom is not None:
     #         prefix_base.append(custom)
@@ -26,12 +26,12 @@ async def prefix_callable(b, message) -> list:
     #         pprefix = await bot.db.hget("pprefix", message.author.id)
     #         if pprefix is not None:
     #             prefix_base.append(pprefix)
-    # return prefix_base
-    return "?"
+    return prefix_base
+    # return "?"
 
 
 class NOTBOT(commands.AutoShardedBot):
-    def __init__(self, config, context):
+    def __init__(self, config, ctx):
         super().__init__(
             command_prefix=prefix_callable,
             description="",
@@ -40,7 +40,7 @@ class NOTBOT(commands.AutoShardedBot):
         )
         self.config = config
         self.db = None
-        self.context = context
+        self.context = ctx
 
         # self.remove_command("help")
         for extension in extensions:
