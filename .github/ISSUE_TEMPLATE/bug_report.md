@@ -4,6 +4,7 @@ about: Create a report to help improve the bot code
 title: "[BUG] <title goes here>"
 labels: bug
 assignees: froebera
+
 ---
 
 **Describe the bug**
