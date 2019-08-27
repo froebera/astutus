@@ -476,7 +476,7 @@ class RaidModule(commands.Cog):
                 )
             )
         else:
-            await ctx.send(f"Queue **{queue}** is currently empty")
+            await ctx.send(f"Queue **{queue_name if queue_name else queue}** is currently empty")
     
     async def raid_queue_clear(self, ctx, queue):
         await has_raid_timer_permissions(ctx)
