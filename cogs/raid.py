@@ -467,10 +467,12 @@ class RaidModule(commands.Cog):
                     r.append(f"{ux}")
             result.append(temp + ". " + ", ".join(r))
             
+        queue_name = queueconfig.get(QUEUE_NAME, None)
+        
         if result:
             await ctx.send(
-                "**Queue** for **{}**:\n```css\n{}```\nUse **{}tt unqueue** to cancel.".format(
-                    "TODO dummy", result and "\n".join(result) or " ", ctx.prefix
+                "**Queue** for **{}**:\n```css\n{}```\nUse **{}raid unqueue** to cancel.".format(
+                   queue_name if queue_name else queue , result and "\n".join(result) or " ", ctx.prefix
                 )
             )
         else:
