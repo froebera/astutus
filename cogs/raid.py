@@ -479,10 +479,12 @@ class RaidModule(commands.Cog):
             await ctx.send(f"Queue **{queue}** is currently empty")
     
     async def raid_queue_clear(self, ctx, queue):
+        await has_raid_timer_permissions(ctx)
         await self.queue_dao.remove_current_and_queued_users_from_queue(ctx.guild.id, queue)
         await ctx.send(f":white_check_mark: Queue **{queue}** has been cleared!")
 
     async def raid_queue_skip(self, ctx, queue):
+        await has_raid_timer_permissions(ctx)
         await self.queue_dao.delete_current_users(ctx.guild.id, queue)
         await ctx.send(f":white_check_mark: **{queue}**: Current attackers cleared")
 
