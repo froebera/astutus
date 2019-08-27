@@ -8,6 +8,7 @@ import sys
 
 extensions = [
     "cogs.raid",
+    "cogs.admin",
     # "cogs.test",
     # "cogs.help"
 ]
