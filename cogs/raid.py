@@ -325,6 +325,18 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Set raid timer")
 
     @commands.check(raidconfig_exists)
+    @raid.command(name="when")
+    async def raid_when(self, ctx):
+        raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
+        channel_id = raid_config.get(RAID_ANNOUNCEMENTCHANNEL, 0)
+        channel = ctx.guild.get_channel(int(channel_id))
+        if not channel:
+             raise commands.BadArgument("Could not find announcement channel. :<")
+
+        await ctx.send(f"Check {channel.mention}, you lazy fuck!")
+
+
+    @commands.check(raidconfig_exists)
     @commands.check(has_raid_timer_permissions)
     @raid.command(name="clear")
     async def raid_clear(self, ctx, duration: typing.Optional[Duration]):
