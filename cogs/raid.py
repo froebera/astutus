@@ -472,7 +472,7 @@ class RaidModule(commands.Cog):
         if result:
             await ctx.send(
                 "**Queue** for **{}**:\n```css\n{}```\nUse **{}raid unqueue** to cancel.".format(
-                   queue_name if queue_name else queue , result and "\n".join(result) or " ", ctx.prefix
+                   queue_name if queue_name else queue, result and "\n".join(result) or " ", ctx.prefix
                 )
             )
         else:

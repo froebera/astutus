@@ -119,7 +119,7 @@ context = Context(
 
 context.start()
 
-bot = NOTBOT(config=cfg, context=context)
+bot = NOTBOT(config=cfg, ctx=context)
 
 
 @bot.check
