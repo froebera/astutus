@@ -1,9 +1,10 @@
 ---
 name: Feature request
-about: Suggest an idea for astutus
+about: Suggest an idea for NOTBOT
 title: "[FEATURE] <title goes here>"
-labels: enhancement, good first issue
+labels: enhancement
 assignees: froebera
+
 ---
 
 **Is your feature request related to a problem? Please describe.**
