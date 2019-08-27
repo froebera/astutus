@@ -277,6 +277,11 @@ class RaidModule(commands.Cog):
     @commands.check(is_mod)
     @raid.command(name="setup", description="initial raid config setup")
     async def raid_initial_setup(self, ctx):
+        raidconfig_exists = self.raid_dao.raid_config_exists(ctx.guild.id)
+        if raidconfig_exists:
+            raise commands.BadArgument("Raids have been setup already")
+
+        
         await self.raid_dao.add_queue(ctx.guild.id, "default")
         
         await self.queue_dao.set_queue_name(ctx.guild.id, "default", "Reset Queue")
