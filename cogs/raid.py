@@ -404,7 +404,6 @@ class RaidModule(commands.Cog):
     @raid.group(name="queue", aliases=["q"], invoke_without_command=True)
     @commands.check(raidconfig_exists)
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
-        print(queue)
         queueconfig, queued_users = await asyncio.gather(
             self.queue_dao.get_queue_configuration(ctx.guild.id, queue),
             self.queue_dao.get_queued_users(ctx.guild.id, queue),
