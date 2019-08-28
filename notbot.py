@@ -1,20 +1,40 @@
 from discord.ext import commands
-import cogs.utils.redis_connection as redis_conn
+from context.context import Context
+from db import RedisConnection, RaidDao, QueueDao
 import asyncio
 import configparser
+import discord
+import sys
 
 extensions = [
     "cogs.raid",
+    "cogs.admin",
+    "cogs.info",
+    # "cogs.stats",
+    # "cogs.test",
     # "cogs.help"
 ]
 
 
 async def prefix_callable(b, message) -> list:
-    return ["n"]
+    user_id = bot.user.id
+    prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
+    if message.guild is not None:
+        prefix_base.append(bot.config["DEFAULT"]["prefix"])
+    #     custom = await bot.db.hget(f"{message.guild.id}:set", "pfx")
+    #     if custom or custom is not None:
+    #         prefix_base.append(custom)
+    #     pprefix_enabled = await bot.db.hget(f"{message.guild.id}:toggle", "pprefix")
+    #     if pprefix_enabled is not None and pprefix_enabled != "0":
+    #         pprefix = await bot.db.hget("pprefix", message.author.id)
+    #         if pprefix is not None:
+    #             prefix_base.append(pprefix)
+    return prefix_base
+    # return "?"
 
 
 class NOTBOT(commands.AutoShardedBot):
-    def __init__(self, config):
+    def __init__(self, config, ctx):
         super().__init__(
             command_prefix=prefix_callable,
             description="",
@@ -22,11 +42,16 @@ class NOTBOT(commands.AutoShardedBot):
             fetch_offline_members=False,
         )
         self.config = config
+        self.db = None
+        self.context = ctx
 
         # self.remove_command("help")
         for extension in extensions:
-            print(f"Loading cog {extension}")
-            self.load_extension(extension)
+            try:
+                print(f"Loading cog {extension}")
+                self.load_extension(extension)
+            except (discord.ClientException, ModuleNotFoundError):
+                print(f"Failed to load extension {extension}.", file=sys.stderr)
 
     async def on_ready(self):
         print(f"Ready: {self.user} (ID: {self.user.id})")
@@ -84,7 +109,19 @@ def get_config(configuration_file: str = "default_config.ini"):
 
 
 cfg = get_config("config.ini")
-bot = NOTBOT(config=cfg)
+
+context = Context(
+    {
+        "redis_connection": RedisConnection(cfg["REDIS"]),
+        "raid_dao": RaidDao(),
+        "queue_dao": QueueDao()
+        #
+    }
+)
+
+context.start()
+
+bot = NOTBOT(config=cfg, ctx=context)
 
 
 @bot.check
@@ -92,8 +129,8 @@ async def globally_block_bots(ctx):
     return not ctx.author.bot
 
 
-pool = redis_conn.con.get_or_create_redis_connection(bot.config["REDIS"])
-bot.db = pool
+# pool = redis_conn.con.get_or_create_redis_connection(bot.config["REDIS"])
+# bot.db = pool
 
 
 bot.run()
