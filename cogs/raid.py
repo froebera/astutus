@@ -57,9 +57,6 @@ class RaidConfigKey(commands.Converter):
 
 TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 
-ALIAS_SKIP = ["skip"]
-ALIAS_SHOW = ["show"]
-ALIAS_CLEAR = ["clear"]
 RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]
 QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
 
@@ -294,7 +291,7 @@ class RaidModule(commands.Cog):
     @commands.check(raidconfig_exists)
     @commands.check(has_raid_timer_permissions)
     @raid.command(name="in")
-    async def raid_in(self, ctx, time: typing.Optional[Duration]):
+    async def raid_in(self, ctx, time: typing.Union[Duration] = None):
         raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
         now = arrow.utcnow()
 
@@ -335,11 +332,10 @@ class RaidModule(commands.Cog):
 
         await ctx.send(f"Check {channel.mention}, you lazy fuck!")
 
-
     @commands.check(raidconfig_exists)
     @commands.check(has_raid_timer_permissions)
     @raid.command(name="clear")
-    async def raid_clear(self, ctx, duration: typing.Optional[Duration]):
+    async def raid_clear(self, ctx, duration: typing.Union[Duration] = None):
         raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
         spawn = raid_config.get(RAID_SPAWN, 0)
         cd = raid_config.get(RAID_COOLDOWN, 0)
@@ -392,7 +388,7 @@ class RaidModule(commands.Cog):
         await self.raid_dao.set_countdown_message(ctx.guild.id, msg.id)
 
     @commands.check(raidconfig_exists)
-    @raid.group(name="cancel")
+    @raid.command(name="cancel")
     @commands.check(has_raid_timer_permissions)
     async def raid_cancel(self, ctx):
         raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
@@ -405,37 +401,10 @@ class RaidModule(commands.Cog):
         await self.clear_current_raid(ctx.guild.id)
         await ctx.send("Cancelled the current raid.")
 
-    @raid.group(name="queue", aliases=["q"])
+    @raid.group(name="queue", aliases=["q"], invoke_without_command=True)
     @commands.check(raidconfig_exists)
-    async def raid_queue(self, ctx, *args):
-        queue = "default"
-        arg = None
-
-        if len(args) > 2:
-            raise commands.BadArgument("To many arguments")
-
-        if len(args) == 1:
-            if args[0] in ALIAS_CLEAR + ALIAS_SHOW + ALIAS_SKIP:
-                arg = args[0]
-            else:
-                queue = args[0]
-        elif len(args) == 2:
-            queue, arg = args[0], args[1]
-
-        await self.check_if_queue_exists_or_break(ctx.guild.id, queue)
-
-        if not arg is None:
-            if arg in ALIAS_SHOW:
-                await self.raid_queue_show(ctx, queue)
-            elif arg in ALIAS_CLEAR:
-                await self.raid_queue_clear(ctx, queue)
-            elif arg in ALIAS_SKIP:
-                await self.raid_queue_skip(ctx, queue)
-            return
-
-        # queueconfig = await self.get_raid_queue_configuration(ctx.guild.id, queue)
-        # queued_users = await self.get_raid_queued_user(ctx.guild.id, queue)
-
+    async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
+        print(queue)
         queueconfig, queued_users = await asyncio.gather(
             self.queue_dao.get_queue_configuration(ctx.guild.id, queue),
             self.queue_dao.get_queued_users(ctx.guild.id, queue),
@@ -456,10 +425,9 @@ class RaidModule(commands.Cog):
             else:
                 ctx.send(f"Sorry **{ctx.author.name}**... Something went wrong. Please try to queue up again")
 
-    async def raid_queue_show(self, ctx, queue):
-        # queued_users = await self.get_raid_queued_user(ctx.guild.id, queue)
-        # queueconfig = await self.get_raid_queue_configuration(ctx.guild.id, queue)
-
+    @raid_queue.command(name="show")
+    @commands.check(raidconfig_exists)
+    async def raid_queue_show(self, ctx, queue: typing.Union[Queue] = "default"):
         queued_users, queueconfig = await asyncio.gather(
             self.queue_dao.get_queued_users(ctx.guild.id, queue),
             self.queue_dao.get_queue_configuration(ctx.guild.id, queue),
@@ -489,20 +457,24 @@ class RaidModule(commands.Cog):
             )
         else:
             await ctx.send(f"Queue **{queue_name if queue_name else queue}** is currently empty")
-    
-    async def raid_queue_clear(self, ctx, queue):
-        await has_raid_timer_permissions(ctx)
-        await self.queue_dao.remove_current_and_queued_users_from_queue(ctx.guild.id, queue)
-        await ctx.send(f":white_check_mark: Queue **{queue}** has been cleared!")
 
-    async def raid_queue_skip(self, ctx, queue):
-        await has_raid_timer_permissions(ctx)
+    @raid_queue.command(name="skip")
+    @commands.check(raidconfig_exists)
+    @commands.check(has_raid_timer_permissions)
+    async def raid_queue_skip(self, ctx, queue: typing.Union[Queue] = "default"):
         await self.queue_dao.delete_current_users(ctx.guild.id, queue)
         await ctx.send(f":white_check_mark: **{queue}**: Current attackers cleared")
 
+    @raid_queue.command(name="clear")
+    @commands.check(raidconfig_exists)
+    @commands.check(has_raid_timer_permissions)
+    async def raid_queue_clear(self, ctx, queue: typing.Union[Queue] = "default"):
+        await self.queue_dao.remove_current_and_queued_users_from_queue(ctx.guild.id, queue)
+        await ctx.send(f":white_check_mark: Queue **{queue}** has been cleared!")
+
     @raid.command(name="unqueue", aliases=["uq"])
     @commands.check(raidconfig_exists)
-    async def raid_unqueue(self, ctx, queue: typing.Optional[Queue] = "default"):
+    async def raid_unqueue(self, ctx, queue: typing.Union[Queue] = "default"):
         queueconfig = await self.queue_dao.get_queue_configuration(ctx.guild.id, queue)
         queued_users = await self.queue_dao.get_queued_users(ctx.guild.id, queue)
         current_users = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
@@ -520,7 +492,7 @@ class RaidModule(commands.Cog):
 
     @raid.command(name="done", aliases=["d"])
     @commands.check(raidconfig_exists)
-    async def raid_done(self, ctx, queue: typing.Optional[Queue] = "default"):
+    async def raid_done(self, ctx, queue: typing.Union[Queue] = "default"):
         queue_config = await self.queue_dao.get_queue_configuration(ctx.guild.id, queue)
         queued_users = await self.queue_dao.get_queued_users(ctx.guild.id, queue)
 
