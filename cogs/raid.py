@@ -207,7 +207,6 @@ class RaidModule(commands.Cog):
         queued_users = await self.queue_dao.get_queued_users(guild.id, queue)
 
         raid_config = await self.raid_dao.get_raid_configuration(guild.id)
-        print(raid_config)
         
         announcement_channel = guild.get_channel(
             int(raid_config.get(RAID_ANNOUNCEMENTCHANNEL, 0))
@@ -413,7 +412,7 @@ class RaidModule(commands.Cog):
         current_users = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
 
         if str(ctx.author.id) in queued_users:
-            await ctx.send(f"Sorry **{ctx.author.name}**, you are already **#{queued_users.index(str(ctx.author.id))}** in the queue")
+            raise commands.BadArgument(f"Sorry **{ctx.author.name}**, you are already **#{queued_users.index(str(ctx.author.id)) + 1}** in the queue")
         elif str(ctx.author.id) in current_users:
             await ctx.send(f"**{ctx.author.name}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
         else:
@@ -450,8 +449,8 @@ class RaidModule(commands.Cog):
         
         if result:
             await ctx.send(
-                "**Queue** for **{}**:\n```css\n{}```\nUse **{}raid unqueue** to cancel.".format(
-                   queue_name if queue_name else queue, result and "\n".join(result) or " ", ctx.prefix
+                "**Queue** for **{}**:\n```css\n{}```\nUse **{}raid unqueue {}** to cancel.".format(
+                   queue_name if queue_name else queue, result and "\n".join(result) or " ", ctx.prefix, queue
                 )
             )
         else:
@@ -479,15 +478,13 @@ class RaidModule(commands.Cog):
         current_users = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
 
         if str(ctx.author.id) in current_users:
-            await ctx.send("Its currently your turn. Use raid queue done")
-            return
+            raise commands.BadArgument(f"**{ctx.author.name}**, its currently your turn. Use **{ctx.prefix}raid done {queue}**")
         
         if not str(ctx.author.id) in queued_users:
-            await ctx.send("You are currently not queued")
-            return
+            raise commands.BadArgument(f"**{ctx.author.name}**, you are currently not queued")
         
         await self.queue_dao.remove_user_from_queued_users(ctx.guild.id, queue, ctx.author.id)
-        await ctx.send("Ok, i removed you from queue")
+        await ctx.send(f":white_check_mark: Ok {ctx.author.name}, i removed you from queue")
 
     @raid.command(name="done", aliases=["d"])
     @commands.check(raidconfig_exists)
@@ -499,11 +496,9 @@ class RaidModule(commands.Cog):
 
         if not str(ctx.author.id) in current_users:
             if not str(ctx.author.id) in queued_users:
-                await ctx.send("It's not your turn & you're not queued.")
-                return
+                raise commands.BadArgument(f"**{ctx.author.name}**, it's not your turn and you're not queued.")
             else:
-                await ctx.send(f"Not your go. Do **{ctx.prefix}raid unqueue {queue}** instead.")
-                return
+                raise commands.BadArgument(f"**{ctx.author.name}**, not your go. Do **{ctx.prefix}raid unqueue {queue}** instead.")
         else:
             current_users = " ".join(current_users)
             current_users = current_users.replace(str(ctx.author.id), "")
@@ -554,7 +549,6 @@ class RaidModule(commands.Cog):
             formatted_value = " ".join([
                 "@**{}**".format(role) for role in roles
             ])
-            print(val)
 
         await self.raid_dao.set_key(ctx.guild.id, config_key, val)
         await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else val}")
@@ -562,22 +556,6 @@ class RaidModule(commands.Cog):
     @commands.group(name="queueconfig", invoke_without_command=True)
     async def queueconfig(self, ctx):
         pass
-
-# raidconfig:
-#     raidconfig show
-#         prints all configurable raid config keys + values
-
-#     raidconfig set <key> <value>
-
-#     queueconfig show <queue?>
-#         if not queue
-#             prints all queues + configurable queue config keys + values
-#         if queue
-#             prints all configurable queue config keys + values for the given queue
-
-#     queueconfig set <queue?> <key> <value>
-#         if not queue
-#             queue = "default"
 
 #         sets the new value for the given key for the supplied queue
     @queueconfig.command(name="show")
@@ -662,7 +640,7 @@ class RaidModule(commands.Cog):
             raise commands.BadArgument("Cannot manually start the default queue")
 
         await self.queue_dao.set_queue_active(ctx.guild.id, queue_name)
-        await ctx.send(f"Started queue {queue_name}") 
+        await ctx.send(f":white_check_mark: Started queue {queue_name}") 
 
     async def check_if_queue_exists_or_break(self, guild_id, queue):
         queues = await self.queue_dao.get_all_queues(guild_id)
