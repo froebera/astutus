@@ -447,7 +447,7 @@ class RaidModule(commands.Cog):
         if str(ctx.author.id) in queued_users:
             await ctx.send(f"Sorry **{ctx.author.name}**, you are already **#{queued_users.index(str(ctx.author.id))}** in the queue")
         elif str(ctx.author.id) in current_users:
-            await ctx.send(f"**{ctx.author.name}**, you are currently attacking, use **{ctx.prefix}raid done** to finish your turn")
+            await ctx.send(f"**{ctx.author.name}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
         else:
             res = await self.queue_dao.add_user_to_queued_users(ctx.guild.id, queue, ctx.author.id)
             queued_users.append(ctx.author.id)
@@ -531,7 +531,7 @@ class RaidModule(commands.Cog):
                 await ctx.send("It's not your turn & you're not queued.")
                 return
             else:
-                await ctx.send(f"Not your go. Do **{ctx.prefix}tt uq** instead.")
+                await ctx.send(f"Not your go. Do **{ctx.prefix}raid unqueue {queue}** instead.")
                 return
         else:
             current_users = " ".join(current_users)
