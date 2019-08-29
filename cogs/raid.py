@@ -160,7 +160,7 @@ class RaidModule(commands.Cog):
                     content=TIMER_TEXT.format("cooldown ends in", hms[0], hms[1], hms[2])
                 )
 
-        if spawn is not None:
+        elif spawn is not None:
             next_spawn = arrow.get(spawn).shift(hours=12 * reset)
             hms = get_hms(next_spawn - now)
             text = "raid_content"
@@ -182,9 +182,13 @@ class RaidModule(commands.Cog):
                     await self.queue_dao.set_queue_active(guild.id, "default")
                 await self.raid_dao.set_raid_reset(guild.id, reset + 1)
 
-            await countdown_message.edit(
-                content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
-            )
+                countdown_message = await announcement_channel.send("Respawning timer ...")
+                await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
+            else:
+                await countdown_message.edit(
+                    content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
+                )
+
 
     async def handle_queues_for_guild(self, guild):
         queues = await self.queue_dao.get_all_queues(guild.id)
