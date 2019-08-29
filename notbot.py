@@ -1,10 +1,46 @@
+import os
+import sys
+import configparser
+import logging.config
+
+# import yaml
+import json
+import discord
 from discord.ext import commands
 from context.context import Context
-from db import RedisConnection, RaidDao, QueueDao
-import asyncio
-import configparser
-import discord
-import sys
+from db import RedisConnection, RaidDao, QueueDao, PostgresConnection
+
+
+def apply_overwrite(node, key, value):
+    if isinstance(value, dict):
+        for item in value:
+            apply_overwrite(node[key], item, value[item])
+    else:
+        node[key] = value
+
+
+def setup_logging():
+    log_config_path = "logging-default.json"
+    log_config_overwrite_path = "logging.json"
+    c = None
+    if os.path.exists(log_config_path):
+        with open(log_config_path, "rt") as f:
+            c = json.load(f)
+
+    if os.path.exists(log_config_overwrite_path):
+        with open(log_config_overwrite_path, "rt") as f:
+            if not c:
+                c = json.load(f)
+            else:
+                overwrite_values = json.load(f)
+                for overwrite_key, value in overwrite_values.items():
+                    apply_overwrite(c, overwrite_key, value)
+
+    if c:
+        logging.config.dictConfig(c)
+    else:
+        logging.basicConfig(level="INFO")
+
 
 extensions = [
     "cogs.raid",
@@ -39,7 +75,7 @@ class NOTBOT(commands.AutoShardedBot):
             command_prefix=prefix_callable,
             description="",
             pm_help=None,
-            fetch_offline_members=False,
+            fetch_offline_members=True,
         )
         self.config = config
         self.db = None
@@ -108,11 +144,16 @@ def get_config(configuration_file: str = "default_config.ini"):
     return config
 
 
+print(__name__)
+
+setup_logging()
+
 cfg = get_config("config.ini")
 
 context = Context(
     {
         "redis_connection": RedisConnection(cfg["REDIS"]),
+        "postgres_connection": PostgresConnection(cfg["POSTGRESQL"]),
         "raid_dao": RaidDao(),
         "queue_dao": QueueDao()
         #
@@ -127,10 +168,6 @@ bot = NOTBOT(config=cfg, ctx=context)
 @bot.check
 async def globally_block_bots(ctx):
     return not ctx.author.bot
-
-
-# pool = redis_conn.con.get_or_create_redis_connection(bot.config["REDIS"])
-# bot.db = pool
 
 
 bot.run()
