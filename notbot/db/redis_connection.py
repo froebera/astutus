@@ -1,6 +1,6 @@
 import asyncio
 from .redis import Redis
-from context import Module, Context
+from notbot.context import Module, Context
 
 MODULE_NAME = "redis_connection"
 

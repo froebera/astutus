@@ -1,47 +1,9 @@
-import os
-import sys
-import configparser
-import logging.config
-
-# import yaml
-import json
 import discord
+import sys
+import logging
 from discord.ext import commands
-from context.context import Context
-from db import RedisConnection, RaidDao, QueueDao, PostgresConnection
 
-
-def apply_overwrite(node, key, value):
-    if isinstance(value, dict):
-        for item in value:
-            apply_overwrite(node[key], item, value[item])
-    else:
-        node[key] = value
-
-
-def setup_logging():
-    log_config_path = "logging-default.json"
-    log_config_overwrite_path = "logging.json"
-    c = None
-    if os.path.exists(log_config_path):
-        with open(log_config_path, "rt") as f:
-            c = json.load(f)
-
-    if os.path.exists(log_config_overwrite_path):
-        with open(log_config_overwrite_path, "rt") as f:
-            if not c:
-                c = json.load(f)
-            else:
-                overwrite_values = json.load(f)
-                for overwrite_key, value in overwrite_values.items():
-                    apply_overwrite(c, overwrite_key, value)
-
-    if c:
-        logging.config.dictConfig(c)
-    else:
-        logging.basicConfig(level="INFO")
-
-
+extension_prefix = "notbot."
 extensions = [
     "cogs.raid",
     "cogs.admin",
@@ -52,7 +14,7 @@ extensions = [
 ]
 
 
-async def prefix_callable(b, message) -> list:
+async def prefix_callable(bot, message) -> list:
     user_id = bot.user.id
     prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
     if message.guild is not None:
@@ -83,11 +45,12 @@ class NOTBOT(commands.AutoShardedBot):
 
         # self.remove_command("help")
         for extension in extensions:
+            e = extension_prefix + extension
             try:
-                print(f"Loading cog {extension}")
-                self.load_extension(extension)
+                print(f"Loading cog {e}")
+                self.load_extension(e)
             except (discord.ClientException, ModuleNotFoundError):
-                print(f"Failed to load extension {extension}.", file=sys.stderr)
+                print(f"Failed to load extension {e}.", file=sys.stderr)
 
     async def on_ready(self):
         print(f"Ready: {self.user} (ID: {self.user.id})")
@@ -131,43 +94,6 @@ class NOTBOT(commands.AutoShardedBot):
             )
             raise error
 
-    # @commands.check
-    # async def globally_block_bots(ctx):
-    #     return not ctx.author.bot
-
-
-def get_config(configuration_file: str = "default_config.ini"):
-    config = configparser.ConfigParser()
-    config.read("default_config.ini")
-    if configuration_file != "default_config.ini":
-        config.read(configuration_file)
-    return config
-
-
-print(__name__)
-
-setup_logging()
-
-cfg = get_config("config.ini")
-
-context = Context(
-    {
-        "redis_connection": RedisConnection(cfg["REDIS"]),
-        "postgres_connection": PostgresConnection(cfg["POSTGRESQL"]),
-        "raid_dao": RaidDao(),
-        "queue_dao": QueueDao()
-        #
-    }
-)
-
-context.start()
-
-bot = NOTBOT(config=cfg, ctx=context)
-
-
-@bot.check
-async def globally_block_bots(ctx):
-    return not ctx.author.bot
-
-
-bot.run()
+    @commands.check
+    async def globally_block_bots(self, ctx):
+        return not ctx.author.bot

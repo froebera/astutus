@@ -1,4 +1,4 @@
-from context import Context, Module
+from notbot.context import Context, Module
 import asyncio
 import asyncpg
 

@@ -1,9 +1,8 @@
 from typing import Union
 from discord.ext import commands
-from cogs.util import create_embed
-
 from discord import Role, Emoji, Embed, User
-from cogs.converter import GlobalUserConverter
+from .util import create_embed
+from .converter import GlobalUserConverter
 
 
 class InfoModule(commands.Cog):

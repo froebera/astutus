@@ -1,5 +1,5 @@
 from discord.ext import commands
-from db import RaidDao, get_raid_dao
+from notbot.db import RaidDao, get_raid_dao
 import asyncio
 
 

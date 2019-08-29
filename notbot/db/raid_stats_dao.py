@@ -1,4 +1,4 @@
-from context import Context, Module
+from notbot.context import Context, Module
 from .redis_connection import RedisConnection, get_redis_connection
 
 MODULE_NAME = "raid_stats_dao"

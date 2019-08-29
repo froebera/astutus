@@ -12,7 +12,7 @@ from discord.ext import commands
 from discord.utils import get
 from datetime import timedelta
 from itertools import zip_longest
-from cogs.util import create_embed
+from notbot.cogs.util import create_embed
 import typing
 import asyncio
 import arrow
@@ -22,7 +22,7 @@ from .converter.queue import Queue
 from .util import Duration, get_hms
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod
 from .util.config_keys import *
-from db import get_queue_dao, get_raid_dao
+from notbot.db import get_queue_dao, get_raid_dao
 
 """
     raid configuration:

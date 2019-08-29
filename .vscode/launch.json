@@ -35,7 +35,7 @@
       "name": "NOTBOT",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/notbot.py",
+      "program": "${workspaceFolder}/run.py",
       "console": "integratedTerminal"
     },
     {
