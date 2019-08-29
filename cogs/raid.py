@@ -180,8 +180,15 @@ class RaidModule(commands.Cog):
                 is_default_queue_active = await self.queue_dao.get_queue_active(guild.id, "default")
                 if not is_default_queue_active:
                     await self.queue_dao.set_queue_active(guild.id, "default")
-                await self.raid_dao.set_raid_reset(guild.id, reset + 1)
 
+                await asyncio.gather(
+                    countdown_message.edit(
+                        content="Raid {}".format("started" if not reset else f"reset #{reset} started")
+                    ),
+                    self.raid_dao.set_raid_reset(guild.id, reset + 1),
+                    return_exceptions=True
+                )
+                
                 countdown_message = await announcement_channel.send("Respawning timer ...")
                 await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
             else:
