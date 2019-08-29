@@ -12,6 +12,7 @@ from discord.ext import commands
 from discord.utils import get
 from datetime import timedelta
 from itertools import zip_longest
+from cogs.util import create_embed
 import typing
 import asyncio
 import arrow
@@ -323,13 +324,42 @@ class RaidModule(commands.Cog):
     @commands.check(raidconfig_exists)
     @raid.command(name="when")
     async def raid_when(self, ctx):
+        now = arrow.utcnow()
         raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
-        channel_id = raid_config.get(RAID_ANNOUNCEMENTCHANNEL, 0)
-        channel = ctx.guild.get_channel(int(channel_id))
-        if not channel:
-             raise commands.BadArgument("Could not find announcement channel. :<")
+        spawn = raid_config.get(RAID_SPAWN, None)
+        reset = int(raid_config.get(RAID_RESET, 0))
+        cooldown = raid_config.get(RAID_COOLDOWN, None)
 
-        await ctx.send(f"Check {channel.mention}, you lazy fuck!")
+        timer = None
+        embed_text = ""
+        hms = None
+
+        if cooldown:
+            cdn = arrow.get(cooldown)
+            if cdn > now:
+                timer = cdn
+                embed_text = "cooldown ends in"
+                hms = get_hms(cdn - now)
+
+        elif spawn:
+            spwn = arrow.get(spawn).shift(hours=12 * reset)
+            hms = get_hms(spwn - now)
+            timer = spwn
+            if reset:
+                embed_text = f"reset #{reset} starts in"
+            else:
+                embed_text = "starts in"
+        else:
+            raise commands.BadArgument("Theres no raid currently active")
+
+        embed = create_embed(self.bot)
+
+        if timer is not None:
+            embed.timestamp = timer.datetime
+
+        embed.description = TIMER_TEXT.format(embed_text, hms[0], hms[1], hms[2])
+        embed.set_footer(text=f"{embed_text[:-3]}", icon_url=ctx.guild.me.avatar_url)
+        await ctx.send(embed=embed)
 
     @commands.check(raidconfig_exists)
     @commands.check(has_raid_timer_permissions)

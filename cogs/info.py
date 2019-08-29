@@ -1,6 +1,6 @@
 from typing import Union
 from discord.ext import commands
-from cogs.util import create_embeded
+from cogs.util import create_embed
 
 from discord import Role, Emoji, Embed, User
 from cogs.converter import GlobalUserConverter
@@ -29,7 +29,7 @@ class InfoModule(commands.Cog):
         description="Displays up to 100 members of the given role",
     )
     async def rolelist(self, ctx, role: Union[Role]):
-        embed = create_embeded(ctx.bot)
+        embed = create_embed(ctx.bot)
         members = role.members[0:100]
         all_members = len(role.members) == len(members)
         title = (
@@ -53,7 +53,7 @@ class InfoModule(commands.Cog):
         name = e.name
         url = f"https://cdn.discordapp.com/emojis/{id}"
 
-        embed = create_embeded(ctx.bot)
+        embed = create_embed(ctx.bot)
         embed.title = f"{name} emoji"
         embed.set_image(url=url)
         embed.image.width = 384
@@ -80,10 +80,14 @@ class InfoModule(commands.Cog):
         name = u.name
         image_url = u.avatar_url_as(static_format="png", size=1024)
 
-        embed = create_embeded(ctx.bot)
+        embed = create_embed(ctx.bot)
         embed.title = f"**{name}**'s avatar"
         embed.set_image(url=image_url)
         await ctx.send(embed=embed)
+
+    @commands.command
+    async def info(self, ctx):
+        pass
 
 
 def setup(bot):
