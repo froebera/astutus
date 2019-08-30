@@ -9,7 +9,7 @@ class EfficiencyCog(commands.Cog):
         self.efficiency_service = get_efficiency_service(bot.context)
 
     @commands.command(
-        name="estimate"
+        name="estimate",
         brief="Calculates your estimated average damage based on your PRL and TCL",
         description="Calculates your estimated average damage based on your PRL and TCL",
     )
