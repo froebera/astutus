@@ -3,7 +3,7 @@ QUEUE_CONFIG_KEY = "raid:{}:queue:{}"
 QUEUE_KEY = "raid:{}:queue:{}:q"
 
 QUEUE_CURRENT_USERS = "current_users"
-QUEUE_SIZE = "queue_size"
+QUEUE_SIZE = "size"
 QUEUE_NAME = "name"
 QUEUE_ACTIVE = "active"
 QUEUE_PROGRESS = "in_progress"
