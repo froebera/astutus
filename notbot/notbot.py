@@ -8,6 +8,7 @@ extensions = [
     "cogs.raid",
     "cogs.admin",
     "cogs.info",
+    "cogs.efficiency"
     # "cogs.stats",
     # "cogs.test",
     # "cogs.help"

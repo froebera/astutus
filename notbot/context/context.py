@@ -5,8 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 class Context:
-    def __init__(self, modules: dict):
-        self.registered_modules = modules
+    def __init__(self, modules: list):
+        self.registered_modules = {}
+
+        for m in modules:
+            self.registered_modules[m.get_name()] = m
 
     def get_module(self, module_name: str):
         module = self.registered_modules.get(module_name)
