@@ -13,6 +13,8 @@ extensions = [
     # "cogs.help"
 ]
 
+logger = logging.getLogger(__name__)
+
 
 async def prefix_callable(bot, message) -> list:
     user_id = bot.user.id
@@ -47,13 +49,13 @@ class NOTBOT(commands.AutoShardedBot):
         for extension in extensions:
             e = extension_prefix + extension
             try:
-                print(f"Loading cog {e}")
+                logger.info("Loading cog %s", e)
                 self.load_extension(e)
             except (discord.ClientException, ModuleNotFoundError):
-                print(f"Failed to load extension {e}.", file=sys.stderr)
+                logger.error("Failed to load cog %s", e)
 
     async def on_ready(self):
-        print(f"Ready: {self.user} (ID: {self.user.id})")
+        logger.info("Ready: %s (ID: %s)", self.user, self.user.id)
 
     def run(self):
         token = self.config["DEFAULT"]["token"]
@@ -88,7 +90,7 @@ class NOTBOT(commands.AutoShardedBot):
             await ctx.send(f":negative_squared_cross_mark: {error}")
 
         else:
-            print(error)
+            logger.exception(error)
             await ctx.send(
                 f":warning: Something went wrong... Please contact the Bot author. {str(error)}"
             )

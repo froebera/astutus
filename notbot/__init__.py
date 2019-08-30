@@ -65,7 +65,7 @@ cfg = get_config("config.ini")
 context = Context(
     {
         "redis_connection": RedisConnection(cfg["REDIS"]),
-        "postgres_connection": PostgresConnection(cfg["POSTGRESQL"]),
+        # "postgres_connection": PostgresConnection(cfg["POSTGRESQL"]),
         "raid_dao": RaidDao(),
         "queue_dao": QueueDao()
         #

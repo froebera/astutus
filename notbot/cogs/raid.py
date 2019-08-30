@@ -15,12 +15,15 @@ import typing
 import asyncio
 import arrow
 import discord
+import logging
 
 from .converter.queue import Queue
 from .util import Duration, get_hms
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
+
+logger = logging.getLogger(__name__)
 
 """
     raid configuration:
@@ -273,7 +276,7 @@ class RaidModule(commands.Cog):
 
     @raid_timer.before_loop
     async def wait_for_bot(self):
-        print("waiting for the bot to be ready")
+        logger.debug("waiting for the bot to be ready")
         await self.bot.wait_until_ready()
 
     @commands.group(name="raid", aliases=["r"], invoke_without_command=True)

@@ -1,6 +1,7 @@
+import aiohttp
 from typing import Union
 from discord.ext import commands
-from discord import Role, Emoji, Embed, User
+from discord import Role, Emoji, Embed, User, Colour
 from .util import create_embed
 from .converter import GlobalUserConverter
 
@@ -87,6 +88,29 @@ class InfoModule(commands.Cog):
     @commands.command
     async def info(self, ctx):
         pass
+
+    @commands.command(
+        name="issues",
+        aliases=["todos"],
+        brief="Displays a list of all open github issues",
+        description="Displays a list of all open github issues",
+    )
+    async def issues(self, ctx):
+        embed = create_embed(self.bot)
+        embed.title = "Currently open issues:"
+        embed.colour = 0xFF0000
+        async with aiohttp.ClientSession() as client:
+            async with client.get(
+                "https://api.github.com/repos/froebera/notbot/issues"
+            ) as resp:
+                res = await resp.json()
+                for issue in res:
+                    issue_title = issue["title"]
+                    issue_body = issue.get("body", "<>")
+                    if not issue_body:
+                        issue_body = "<>"
+                    embed.add_field(name=issue_title, value=issue_body, inline=False)
+        await ctx.send(embed=embed)
 
 
 def setup(bot):
