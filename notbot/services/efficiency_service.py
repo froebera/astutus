@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class EfficiencyService(Module):
     def __init__(self):
-        self.base = 315
+        self.base = 320
         self.card_perc = 1.00795
         self.treshold_1 = 50
         self.treshold_2 = 180
