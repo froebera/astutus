@@ -21,7 +21,7 @@ class EfficiencyCog(commands.Cog):
 
         estimated_damage_hum = num_to_hum(estimated_damage)
         await ctx.send(
-            f"The estimated damage for raid level **{player_raid_level}** and total card levels **{total_card_levels}** is **{estimated_damage_hum}**"
+            f"The estimated average damage for raid level **{player_raid_level}** and total card levels **{total_card_levels}** is **{estimated_damage_hum}**"
         )
 
 
