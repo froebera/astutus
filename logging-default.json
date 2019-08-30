@@ -18,7 +18,7 @@
       "class": "logging.handlers.RotatingFileHandler",
       "level": "INFO",
       "formatter": "simple",
-      "filename": "notbot-info.log",
+      "filename": "./logs/notbot-info.log",
       "maxBytes": 10485760,
       "backupCount": 20,
       "encoding": "utf8"
@@ -28,7 +28,7 @@
       "class": "logging.handlers.RotatingFileHandler",
       "level": "ERROR",
       "formatter": "simple",
-      "filename": "notbot-errors.log",
+      "filename": "./logs/notbot-errors.log",
       "maxBytes": 10485760,
       "backupCount": 20,
       "encoding": "utf8"
