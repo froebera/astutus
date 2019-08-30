@@ -10,6 +10,7 @@ from notbot.cogs.util import (
     RAID_INIT,
     RAID_SPAWN,
     RAID_COOLDOWN,
+    RAID_CLAN_ROLES,
 )
 
 # from .redis_connection import RedisConnection
@@ -42,6 +43,11 @@ class RaidDao(Module):
     async def get_raid_timer_roles(self, guild_id):
         return await self.connection.hget(
             RAID_CONFIG_KEY.format(guild_id), RAID_TIMER_ROLES
+        )
+
+    async def get_clan_roles(self, guild_id):
+        return await self.connection.hget(
+            RAID_CONFIG_KEY.format(guild_id), RAID_CLAN_ROLES
         )
 
     async def set_countdown_message(self, guild_id, msg_id):

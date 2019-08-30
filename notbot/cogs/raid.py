@@ -5,8 +5,6 @@
 #remove verbose printlns
 #reorganize command groups
 
-#TODO CHECK IF QUEUE STILL WORKS
-
 from discord.ext import tasks
 from discord.ext import commands
 from discord.utils import get
@@ -20,7 +18,7 @@ import discord
 
 from .converter.queue import Queue
 from .util import Duration, get_hms
-from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod
+from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
 
@@ -58,7 +56,7 @@ class RaidConfigKey(commands.Converter):
 
 TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 
-RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]
+RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES, RAID_CLAN_ROLES]
 QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
 
 class RaidModule(commands.Cog):
@@ -333,6 +331,7 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Set raid timer")
 
     @commands.check(raidconfig_exists)
+    @commands.check(has_clan_role)
     @raid.command(name="when")
     async def raid_when(self, ctx):
         now = arrow.utcnow()
@@ -442,6 +441,7 @@ class RaidModule(commands.Cog):
         await ctx.send("Cancelled the current raid.")
 
     @raid.group(name="queue", aliases=["q"], invoke_without_command=True)
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
         queueconfig, queued_users = await asyncio.gather(
@@ -466,6 +466,7 @@ class RaidModule(commands.Cog):
 
     @raid_queue.command(name="show")
     @commands.check(raidconfig_exists)
+    @commands.check(has_clan_role)
     async def raid_queue_show(self, ctx, queue: typing.Union[Queue] = "default"):
         queued_users, queueconfig = await asyncio.gather(
             self.queue_dao.get_queued_users(ctx.guild.id, queue),
@@ -512,6 +513,7 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Queue **{queue}** has been cleared!")
 
     @raid.command(name="unqueue", aliases=["uq"])
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_unqueue(self, ctx, queue: typing.Union[Queue] = "default"):
         queueconfig = await self.queue_dao.get_queue_configuration(ctx.guild.id, queue)
@@ -528,6 +530,7 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Ok {ctx.author.name}, i removed you from queue")
 
     @raid.command(name="done", aliases=["d"])
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_done(self, ctx, queue: typing.Union[Queue] = "default"):
         queue_config = await self.queue_dao.get_queue_configuration(ctx.guild.id, queue)
@@ -552,6 +555,7 @@ class RaidModule(commands.Cog):
         pass
 
     @raidconfig.command(name="show")
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raidconfig_show(self, ctx):
         raid_configuration = await self.raid_dao.get_raid_configuration(ctx.guild.id)
@@ -578,7 +582,7 @@ class RaidModule(commands.Cog):
                 val = channel.id
                 formatted_value = f"**{channel.mention}**"
         
-        elif config_key in [RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]:
+        elif config_key in [RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES, RAID_CLAN_ROLES]:
             roles = []
             for v in value:
                 role = await commands.RoleConverter().convert(ctx, v)
@@ -600,6 +604,7 @@ class RaidModule(commands.Cog):
 
 #         sets the new value for the given key for the supplied queue
     @queueconfig.command(name="show")
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def queueconfig_show(self, ctx, queue: typing.Union[Queue] = None):
         if queue:
