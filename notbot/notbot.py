@@ -1,11 +1,9 @@
-from discord.ext import commands
-from context.context import Context
-from db import RedisConnection, RaidDao, QueueDao
-import asyncio
-import configparser
 import discord
 import sys
+import logging
+from discord.ext import commands
 
+extension_prefix = "notbot."
 extensions = [
     "cogs.raid",
     "cogs.admin",
@@ -15,8 +13,10 @@ extensions = [
     # "cogs.help"
 ]
 
+logger = logging.getLogger(__name__)
 
-async def prefix_callable(b, message) -> list:
+
+async def prefix_callable(bot, message) -> list:
     user_id = bot.user.id
     prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
     if message.guild is not None:
@@ -39,7 +39,7 @@ class NOTBOT(commands.AutoShardedBot):
             command_prefix=prefix_callable,
             description="",
             pm_help=None,
-            fetch_offline_members=False,
+            fetch_offline_members=True,
         )
         self.config = config
         self.db = None
@@ -47,14 +47,15 @@ class NOTBOT(commands.AutoShardedBot):
 
         # self.remove_command("help")
         for extension in extensions:
+            e = extension_prefix + extension
             try:
-                print(f"Loading cog {extension}")
-                self.load_extension(extension)
+                logger.info("Loading cog %s", e)
+                self.load_extension(e)
             except (discord.ClientException, ModuleNotFoundError):
-                print(f"Failed to load extension {extension}.", file=sys.stderr)
+                logger.error("Failed to load cog %s", e)
 
     async def on_ready(self):
-        print(f"Ready: {self.user} (ID: {self.user.id})")
+        logger.info("Ready: %s (ID: %s)", self.user, self.user.id)
 
     def run(self):
         token = self.config["DEFAULT"]["token"]
@@ -89,48 +90,12 @@ class NOTBOT(commands.AutoShardedBot):
             await ctx.send(f":negative_squared_cross_mark: {error}")
 
         else:
-            print(error)
+            logger.exception(error)
             await ctx.send(
                 f":warning: Something went wrong... Please contact the Bot author. {str(error)}"
             )
             raise error
 
-    # @commands.check
-    # async def globally_block_bots(ctx):
-    #     return not ctx.author.bot
-
-
-def get_config(configuration_file: str = "default_config.ini"):
-    config = configparser.ConfigParser()
-    config.read("default_config.ini")
-    if configuration_file != "default_config.ini":
-        config.read(configuration_file)
-    return config
-
-
-cfg = get_config("config.ini")
-
-context = Context(
-    {
-        "redis_connection": RedisConnection(cfg["REDIS"]),
-        "raid_dao": RaidDao(),
-        "queue_dao": QueueDao()
-        #
-    }
-)
-
-context.start()
-
-bot = NOTBOT(config=cfg, ctx=context)
-
-
-@bot.check
-async def globally_block_bots(ctx):
-    return not ctx.author.bot
-
-
-# pool = redis_conn.con.get_or_create_redis_connection(bot.config["REDIS"])
-# bot.db = pool
-
-
-bot.run()
+    @commands.check
+    async def globally_block_bots(self, ctx):
+        return not ctx.author.bot

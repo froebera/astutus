@@ -1,6 +1,6 @@
 import asyncio
 from .redis import Redis
-from context import Module, Context
+from notbot.context import Module, Context
 
 MODULE_NAME = "redis_connection"
 
@@ -9,6 +9,7 @@ class RedisConnection(Module):
     def __init__(self, redis_config):
         self.connection = None
         self.redis_config = redis_config
+        print(__name__)
 
     def get_connection(self):
         if not self.connection:

@@ -1,5 +1,5 @@
 from discord.ext import commands
-from db import get_queue_dao
+from notbot.db import get_queue_dao
 
 
 class Queue(commands.Converter):

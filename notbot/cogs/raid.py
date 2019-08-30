@@ -5,23 +5,25 @@
 #remove verbose printlns
 #reorganize command groups
 
-#TODO CHECK IF QUEUE STILL WORKS
-
 from discord.ext import tasks
 from discord.ext import commands
 from discord.utils import get
 from datetime import timedelta
 from itertools import zip_longest
+from notbot.cogs.util import create_embed
 import typing
 import asyncio
 import arrow
 import discord
+import logging
 
 from .converter.queue import Queue
 from .util import Duration, get_hms
-from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod
+from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
-from db import get_queue_dao, get_raid_dao
+from notbot.db import get_queue_dao, get_raid_dao
+
+logger = logging.getLogger(__name__)
 
 """
     raid configuration:
@@ -57,7 +59,7 @@ class RaidConfigKey(commands.Converter):
 
 TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 
-RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]
+RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES, RAID_CLAN_ROLES]
 QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
 
 class RaidModule(commands.Cog):
@@ -158,7 +160,7 @@ class RaidModule(commands.Cog):
                     content=TIMER_TEXT.format("cooldown ends in", hms[0], hms[1], hms[2])
                 )
 
-        if spawn is not None:
+        elif spawn is not None:
             next_spawn = arrow.get(spawn).shift(hours=12 * reset)
             hms = get_hms(next_spawn - now)
             text = "raid_content"
@@ -178,11 +180,22 @@ class RaidModule(commands.Cog):
                 is_default_queue_active = await self.queue_dao.get_queue_active(guild.id, "default")
                 if not is_default_queue_active:
                     await self.queue_dao.set_queue_active(guild.id, "default")
-                await self.raid_dao.set_raid_reset(guild.id, reset + 1)
 
-            await countdown_message.edit(
-                content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
-            )
+                await asyncio.gather(
+                    countdown_message.edit(
+                        content="Raid {}".format("started" if not reset else f"reset #{reset} started")
+                    ),
+                    self.raid_dao.set_raid_reset(guild.id, reset + 1),
+                    return_exceptions=True
+                )
+                
+                countdown_message = await announcement_channel.send("Respawning timer ...")
+                await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
+            else:
+                await countdown_message.edit(
+                    content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
+                )
+
 
     async def handle_queues_for_guild(self, guild):
         queues = await self.queue_dao.get_all_queues(guild.id)
@@ -262,7 +275,7 @@ class RaidModule(commands.Cog):
 
     @raid_timer.before_loop
     async def wait_for_bot(self):
-        print("waiting for the bot to be ready")
+        logger.debug("waiting for the bot to be ready")
         await self.bot.wait_until_ready()
 
     @commands.group(name="raid", aliases=["r"], invoke_without_command=True)
@@ -320,15 +333,45 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Set raid timer")
 
     @commands.check(raidconfig_exists)
+    @commands.check(has_clan_role)
     @raid.command(name="when")
     async def raid_when(self, ctx):
+        now = arrow.utcnow()
         raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
-        channel_id = raid_config.get(RAID_ANNOUNCEMENTCHANNEL, 0)
-        channel = ctx.guild.get_channel(int(channel_id))
-        if not channel:
-             raise commands.BadArgument("Could not find announcement channel. :<")
+        spawn = raid_config.get(RAID_SPAWN, None)
+        reset = int(raid_config.get(RAID_RESET, 0))
+        cooldown = raid_config.get(RAID_COOLDOWN, None)
 
-        await ctx.send(f"Check {channel.mention}, you lazy fuck!")
+        timer = None
+        embed_text = ""
+        hms = None
+
+        if cooldown:
+            cdn = arrow.get(cooldown)
+            if cdn > now:
+                timer = cdn
+                embed_text = "cooldown ends in"
+                hms = get_hms(cdn - now)
+
+        elif spawn:
+            spwn = arrow.get(spawn).shift(hours=12 * reset)
+            hms = get_hms(spwn - now)
+            timer = spwn
+            if reset:
+                embed_text = f"reset #{reset} starts in"
+            else:
+                embed_text = "starts in"
+        else:
+            raise commands.BadArgument("Theres no raid currently active")
+
+        embed = create_embed(self.bot)
+
+        if timer is not None:
+            embed.timestamp = timer.datetime
+
+        embed.description = TIMER_TEXT.format(embed_text, hms[0], hms[1], hms[2])
+        embed.set_footer(text=f"{embed_text[:-3]}", icon_url=ctx.guild.me.avatar_url)
+        await ctx.send(embed=embed)
 
     @commands.check(raidconfig_exists)
     @commands.check(has_raid_timer_permissions)
@@ -400,6 +443,7 @@ class RaidModule(commands.Cog):
         await ctx.send("Cancelled the current raid.")
 
     @raid.group(name="queue", aliases=["q"], invoke_without_command=True)
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
         queueconfig, queued_users = await asyncio.gather(
@@ -424,6 +468,7 @@ class RaidModule(commands.Cog):
 
     @raid_queue.command(name="show")
     @commands.check(raidconfig_exists)
+    @commands.check(has_clan_role)
     async def raid_queue_show(self, ctx, queue: typing.Union[Queue] = "default"):
         queued_users, queueconfig = await asyncio.gather(
             self.queue_dao.get_queued_users(ctx.guild.id, queue),
@@ -470,6 +515,7 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Queue **{queue}** has been cleared!")
 
     @raid.command(name="unqueue", aliases=["uq"])
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_unqueue(self, ctx, queue: typing.Union[Queue] = "default"):
         queueconfig = await self.queue_dao.get_queue_configuration(ctx.guild.id, queue)
@@ -486,6 +532,7 @@ class RaidModule(commands.Cog):
         await ctx.send(f":white_check_mark: Ok {ctx.author.name}, i removed you from queue")
 
     @raid.command(name="done", aliases=["d"])
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_done(self, ctx, queue: typing.Union[Queue] = "default"):
         queue_config = await self.queue_dao.get_queue_configuration(ctx.guild.id, queue)
@@ -510,6 +557,7 @@ class RaidModule(commands.Cog):
         pass
 
     @raidconfig.command(name="show")
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raidconfig_show(self, ctx):
         raid_configuration = await self.raid_dao.get_raid_configuration(ctx.guild.id)
@@ -536,7 +584,7 @@ class RaidModule(commands.Cog):
                 val = channel.id
                 formatted_value = f"**{channel.mention}**"
         
-        elif config_key in [RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES]:
+        elif config_key in [RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES, RAID_CLAN_ROLES]:
             roles = []
             for v in value:
                 role = await commands.RoleConverter().convert(ctx, v)
@@ -558,6 +606,7 @@ class RaidModule(commands.Cog):
 
 #         sets the new value for the given key for the supplied queue
     @queueconfig.command(name="show")
+    @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def queueconfig_show(self, ctx, queue: typing.Union[Queue] = None):
         if queue:

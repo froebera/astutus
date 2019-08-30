@@ -1,9 +1,9 @@
+import aiohttp
 from typing import Union
 from discord.ext import commands
-from cogs.util import create_embeded
-
-from discord import Role, Emoji, Embed, User
-from cogs.converter import GlobalUserConverter
+from discord import Role, Emoji, Embed, User, Colour
+from .util import create_embed
+from .converter import GlobalUserConverter
 
 
 class InfoModule(commands.Cog):
@@ -29,7 +29,7 @@ class InfoModule(commands.Cog):
         description="Displays up to 100 members of the given role",
     )
     async def rolelist(self, ctx, role: Union[Role]):
-        embed = create_embeded(ctx.bot)
+        embed = create_embed(ctx.bot)
         members = role.members[0:100]
         all_members = len(role.members) == len(members)
         title = (
@@ -53,7 +53,7 @@ class InfoModule(commands.Cog):
         name = e.name
         url = f"https://cdn.discordapp.com/emojis/{id}"
 
-        embed = create_embeded(ctx.bot)
+        embed = create_embed(ctx.bot)
         embed.title = f"{name} emoji"
         embed.set_image(url=url)
         embed.image.width = 384
@@ -80,9 +80,36 @@ class InfoModule(commands.Cog):
         name = u.name
         image_url = u.avatar_url_as(static_format="png", size=1024)
 
-        embed = create_embeded(ctx.bot)
+        embed = create_embed(ctx.bot)
         embed.title = f"**{name}**'s avatar"
         embed.set_image(url=image_url)
+        await ctx.send(embed=embed)
+
+    @commands.command
+    async def info(self, ctx):
+        pass
+
+    @commands.command(
+        name="issues",
+        aliases=["todos"],
+        brief="Displays a list of all open github issues",
+        description="Displays a list of all open github issues",
+    )
+    async def issues(self, ctx):
+        embed = create_embed(self.bot)
+        embed.title = "Currently open issues:"
+        embed.colour = 0xFF0000
+        async with aiohttp.ClientSession() as client:
+            async with client.get(
+                "https://api.github.com/repos/froebera/notbot/issues"
+            ) as resp:
+                res = await resp.json()
+                for issue in res:
+                    issue_title = issue["title"]
+                    issue_body = issue.get("body", "<>")
+                    if not issue_body:
+                        issue_body = "<>"
+                    embed.add_field(name=issue_title, value=issue_body, inline=False)
         await ctx.send(embed=embed)
 
 

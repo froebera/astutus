@@ -1,4 +1,7 @@
+import logging
 from .module import Module
+
+logger = logging.getLogger(__name__)
 
 
 class Context:
@@ -14,7 +17,7 @@ class Context:
 
     def start(self):
         for module in self.registered_modules.values():
-            print("starting module")
+            logger.info("Starting module %s", module.get_name())
             module: Module = module
             module.start(self)
 

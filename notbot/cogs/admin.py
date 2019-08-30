@@ -1,7 +1,7 @@
 from discord.ext import tasks
 from discord.ext import commands
 
-from db import get_redis_connection
+from notbot.db import get_redis_connection
 
 
 class AdminModule(commands.Cog):

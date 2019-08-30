@@ -1,7 +1,7 @@
-from context import Module, Context
+from notbot.context import Module, Context
 from .redis_connection import RedisConnection, get_redis_connection
 
-from cogs.util import (
+from notbot.cogs.util import (
     QUEUE_CONFIG_KEY,
     QUEUE_ACTIVE,
     QUEUE_KEY,
@@ -46,7 +46,9 @@ class QueueDao(Module):
         )
 
     async def get_queue_active(self, guild_id, queue_name):
-        return await self.connection.hget(QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_ACTIVE)
+        return await self.connection.hget(
+            QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_ACTIVE
+        )
 
     async def set_queue_progress(self, guild_id, queue_name, progress=1):
         return await self.connection.hset(
