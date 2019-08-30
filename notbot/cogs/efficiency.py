@@ -9,8 +9,8 @@ class EfficiencyCog(commands.Cog):
         self.efficiency_service = get_efficiency_service(bot.context)
 
     @commands.command(
-        brief="Calculates your estimated damage based on your PRL and TCL",
-        description="Calculates your estimated damage based on your PRL and TCL",
+        brief="Calculates your estimated average damage based on your PRL and TCL",
+        description="Calculates your estimated average damage based on your PRL and TCL",
     )
     async def calculate_estimated_damage(
         self, ctx, player_raid_level: int, total_card_levels: int
