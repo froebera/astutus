@@ -95,9 +95,11 @@ class NOTBOT(commands.AutoShardedBot):
 
         else:
             if ctx.command:
-                logger.error("Ignoring exception in command %s", ctx.command)
+                logger.error(
+                    "An unexpected exception occured while invoking %s", ctx.command
+                )
             else:
-                logger.error("Ignoring exception")
+                logger.error("An unexpected exception occured")
 
             logger.error(
                 "".join(
