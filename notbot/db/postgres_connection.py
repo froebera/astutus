@@ -28,9 +28,6 @@ class PostgresConnection(Module):
 
         self.pool = pool
 
-    def get_pool(self):
-        return self.pool
-
 
 def get_postgres_connection(context: Context) -> PostgresConnection:
     return context.get_module(MODULE_NAME)
@@ -46,6 +43,9 @@ async def init_db(uri):
         await connection.execute(_raid_attack_conclusion)
         await connection.execute(_raid_player_stats)
 
+        for alter_statement in _alter_statements:
+            await connection.execute(alter_statement)
+
     return pool
 
 
@@ -55,7 +55,7 @@ _raid_query = """CREATE TABLE IF NOT EXISTS raid(
     guild_id TEXT
 );"""
 
-_raid_attack_conclusion = """CREATE TABLE IF NOT EXISTS raid_attack_conclusion(
+_raid_attack_conclusion = """CREATE TABLE IF NOT EXISTS raid_player_attack(
     player_id TEXT,
     raid_id INTEGER REFERENCES raid(id),
     total_dmg INTEGER,
@@ -69,4 +69,17 @@ _raid_player_stats = """CREATE TABLE IF NOT EXISTS raid_player_stats(
     total_card_levels INTEGER,
     raid_level INTEGER,
     PRIMARY KEY (player_id, raid_id)
-);"""
+); """
+
+# _raid_player_bonuses = """CREATE TABLE IF NOT EXISTS raid_player_bonuses(
+#     player_id TEXT,
+#     raid_id INTEGER REFERENCES raid(id),
+#     PRIMARY KEY (player_id, raid_id)
+# );"""
+
+
+_alter_statements = [
+    "ALTER TABLE raid ADD COLUMN IF NOT EXISTS started_at DATE",
+    "DROP TABLE IF EXISTS raid_attack_conclusion",
+    "ALTER TABLE raid_player_attack ADD COLUMN IF NOT EXISTS player_name TEXT",
+]

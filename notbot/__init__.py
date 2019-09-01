@@ -10,7 +10,7 @@ import logging
 from discord.ext import commands
 from .context import Context
 from .db import RedisConnection, RaidDao, QueueDao, PostgresConnection
-from .services import EfficiencyService
+from .services import EfficiencyService, RaidStatService
 
 from .notbot import NOTBOT
 
@@ -75,10 +75,11 @@ cfg = get_config("config.ini")
 context = Context(
     [
         RedisConnection(cfg["REDIS"]),
-        # PostgresConnection(cfg["POSTGRESQL"]),
+        PostgresConnection(cfg["POSTGRESQL"]),
         RaidDao(),
         QueueDao(),
         EfficiencyService(),
+        RaidStatService(),
     ]
 )
 
