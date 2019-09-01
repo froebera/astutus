@@ -1,6 +1,6 @@
-import discord
-import sys
 import logging
+import traceback
+import discord
 from discord.ext import commands
 
 extension_prefix = "notbot."
@@ -90,12 +90,24 @@ class NOTBOT(commands.AutoShardedBot):
             # TODO Find usage for cmd ?
             await ctx.send(f":negative_squared_cross_mark: {error}")
 
+        elif isinstance(error, commands.CommandNotFound):
+            await ctx.send(f":negative_squared_cross_mark: {error}")
+
         else:
-            logger.exception(error)
-            await ctx.send(
-                f":warning: Something went wrong... Please contact the Bot author. {str(error)}"
+            if ctx.command:
+                logger.error("Ignoring exception in command %s", ctx.command)
+            else:
+                logger.error("Ignoring exception")
+
+            logger.error(
+                "".join(
+                    traceback.format_exception(type(error), error, error.__traceback__)
+                )
             )
-            raise error
+
+            await ctx.send(
+                f":negative_squared_cross_mark: Something went wrong ;( Please contact the bot author:\n {str(error)}"
+            )
 
     @commands.check
     async def globally_block_bots(self, ctx):
