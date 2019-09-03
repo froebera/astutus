@@ -1,0 +1,2 @@
+class RaidAlreadyCleared(Exception):
+    pass

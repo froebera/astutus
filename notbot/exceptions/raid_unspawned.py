@@ -1,0 +1,2 @@
+class RaidUnspawned(Exception):
+    pass

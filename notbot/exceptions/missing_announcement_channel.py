@@ -1,0 +1,2 @@
+class MissingAnnouncementChannel(Exception):
+    pass

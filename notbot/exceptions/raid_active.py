@@ -1,0 +1,2 @@
+class RaidActive(Exception):
+    pass

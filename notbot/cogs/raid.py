@@ -17,11 +17,14 @@ import arrow
 import discord
 import logging
 
+from ..services import RaidService, get_raid_service
 from .converter.queue import Queue
 from .util import Duration, get_hms
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
+
+from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +71,7 @@ class RaidModule(commands.Cog):
         self.raid_timer.start()
         self.queue_dao = get_queue_dao(self.bot.context)
         self.raid_dao = get_raid_dao(self.bot.context)
+        self.raid_service = get_raid_service(self.bot.context)
 
     def cog_unload(self):
         self.raid_timer.cancel()
@@ -113,22 +117,21 @@ class RaidModule(commands.Cog):
             raise asyncio.CancelledError
 
         countdown_message = None
-
+        
         if messageid is not None:
             try:
                 countdown_message = await announcement_channel.fetch_message(
                     int(messageid)
                 )
-            except discord.NotFound as error:
-                print("Couldnt find message")
-                print(error)
+            except discord.NotFound:
+                logger.exception("Could not find countdown message")
                 countdown_message = await announcement_channel.send(
                     "Error while fetching timer message. Respawning timer..."
                 )
                 await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
 
 
-        if countdown_message is None and spawn:
+        if countdown_message is None and (spawn or cooldown):
             countdown_message = await announcement_channel.send("Respawning timer ...")
             await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
 
@@ -195,7 +198,6 @@ class RaidModule(commands.Cog):
                 await countdown_message.edit(
                     content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
                 )
-
 
     async def handle_queues_for_guild(self, guild):
         queues = await self.queue_dao.get_all_queues(guild.id)
@@ -303,33 +305,23 @@ class RaidModule(commands.Cog):
     @commands.check(has_raid_timer_permissions)
     @raid.command(name="in")
     async def raid_in(self, ctx, time: typing.Union[Duration] = None):
-        raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
         now = arrow.utcnow()
-
-        cooldown = raid_config.get(RAID_COOLDOWN, None)
-        spawn = raid_config.get(RAID_SPAWN, None)
-        announcement_channel_id = int(raid_config.get(RAID_ANNOUNCEMENTCHANNEL, 0))
-
-        announcement_channel = ctx.guild.get_channel(announcement_channel_id)
-
         if not time:
             time = now.shift(hours=24)
+
+        announcement_channel_id = int(await self.raid_service.get_announcement_channel_id(ctx.guild.id))
+        announcement_channel = ctx.guild.get_channel(announcement_channel_id)
 
         if not announcement_channel:
             raise commands.BadArgument("No announcement channel configured")
 
-        if cooldown:
-            cdn = arrow.get(cooldown)
-            if cdn > now:
-                raise commands.BadArgument(f"Raid is currently on cooldown. Wait or use **{ctx.prefix}raid cancel** first")
-
-        if spawn:
+        try:
+            await self.raid_service.start_raid(ctx.guild.id, time)
+        except RaidActive:
             raise commands.BadArgument(f"Raid is currently active. Use **{ctx.prefix}raid clear** or **{ctx.prefix}raid cancel** first")
+        except RaidOnCooldown:
+            raise commands.BadArgument(f"Raid is currently on cooldown. Wait or use **{ctx.prefix}raid cancel** first")
 
-        #TODO clear current raid in dao
-        await self.clear_current_raid(ctx.guild.id)
-
-        await self.raid_dao.set_raid_spawn(ctx.guild.id, time.timestamp)
         await ctx.send(f":white_check_mark: Set raid timer")
 
     @commands.check(raidconfig_exists)
@@ -337,7 +329,7 @@ class RaidModule(commands.Cog):
     @raid.command(name="when")
     async def raid_when(self, ctx):
         now = arrow.utcnow()
-        raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
+        raid_config = await self.raid_service.get_raid_configuration(ctx.guild.id)
         spawn = raid_config.get(RAID_SPAWN, None)
         reset = int(raid_config.get(RAID_RESET, 0))
         cooldown = raid_config.get(RAID_COOLDOWN, None)
@@ -377,56 +369,38 @@ class RaidModule(commands.Cog):
     @commands.check(has_raid_timer_permissions)
     @raid.command(name="clear")
     async def raid_clear(self, ctx, duration: typing.Union[Duration] = None):
-        raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
-        spawn = raid_config.get(RAID_SPAWN, 0)
-        cd = raid_config.get(RAID_COOLDOWN, 0)
-
-        if not spawn and not cd:
-            raise commands.BadArgument("No raid to clear")
-
-        if cd:
-            raise commands.BadArgument("Raid has been cleared already")
-
         now = arrow.utcnow()
-        spwn_arrow = arrow.get(spawn)
-        if now < spwn_arrow:
+        logger.debug("raid_clear now: %s", now)
+        logger.debug("raid_clear + 59 59 %s", now.shift(minutes=59, seconds=59))
+        if duration is None:
+            duration = now.shift(minutes=59, seconds=59)
+        
+        try:
+            time_needed_to_clear = await self.raid_service.clear_raid(ctx.guild.id, duration)
+        except ValueError:
+            raise commands.BadArgument("Cooldown end must be 60m after raid.")
+            return
+        except NoRaidActive:
+            raise commands.BadArgument("No raid to clear")
+            return
+        except RaidAlreadyCleared:
+            raise commands.BadArgument("Raid has been cleared already")
+            return
+        except RaidUnspawned:
             raise commands.BadArgument(
                 f"Can't clear unspawned raid. Use **{ctx.prefix}raid cancel** to cancel it."
             )
+            return
+        
+        h, m, s = get_hms(time_needed_to_clear)
+        cleared = f"**{h}**h **{m}**m **{s}**s"
 
-        if duration is None:
-            duration = now.shift(minutes=59, seconds=59)
-
-        delta_cd = duration - now
-        _h, _m, _s = get_hms(delta_cd)
-        shifter = {}
-        if _m not in [0, 59]:
-            shifter["minutes"] = 60 - _m
-        if _s not in [0, 59]:
-            shifter["seconds"] = 60 - _s
-        if duration < spwn_arrow.shift(minutes=59, seconds=58):
-            raise commands.BadArgument("Cooldown end must be 60m after raid.")
-
-        total_time = now.shift(**shifter) - spwn_arrow
-        _h2, _m2, _s2 = get_hms(total_time)
-        cleared = f"**{_h2}**h **{_m2}**m **{_s2}**s"
         await ctx.send(
             "Raid **cleared** in {}.".format(cleared)
         )
 
-        #TODO clear current raid in dao
-        await self.clear_current_raid(ctx.guild.id)
+        await self.raid_dao.del_key(ctx.guild.id, RAID_COUNTDOWNMESSAGE)
 
-        shft_arrow = now.shift(minutes=_m > 0 and _m or 0, seconds=_s > 0 and _s or 0)
-        await self.raid_dao.set_raid_cooldown(ctx.guild.id, shft_arrow.timestamp)
-
-        cleared = f"**{_h}**h **{_m}**m **{_s}**s"
-        announcement_channel = int(raid_config.get(RAID_ANNOUNCEMENTCHANNEL, 0))
-        announce = ctx.guild.get_channel(announcement_channel)
-        if announce is None:
-            raise commands.BadArgument("Could not find announce channel. :<")
-        msg = await announce.send(f"Raid cooldown ends in {cleared}.")
-        await self.raid_dao.set_countdown_message(ctx.guild.id, msg.id)
 
     @commands.check(raidconfig_exists)
     @raid.command(name="cancel")

@@ -10,7 +10,7 @@ import logging
 from discord.ext import commands
 from .context import Context
 from .db import RedisConnection, RaidDao, QueueDao, PostgresConnection
-from .services import EfficiencyService, RaidStatService
+from .services import EfficiencyService, RaidStatService, RaidService
 
 from .notbot import NOTBOT
 
@@ -80,6 +80,7 @@ context = Context(
         QueueDao(),
         EfficiencyService(),
         RaidStatService(),
+        RaidService(),
     ]
 )
 

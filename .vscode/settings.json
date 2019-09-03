@@ -1,22 +1,21 @@
 {
-    "breadcrumbs.enabled": true,
-    "editor.cursorStyle": "block",
-    "editor.formatOnSave": true,
-    "editor.renderWhitespace": "boundary",
-    "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 110,
-    "git.postCommitCommand": "push",
-    "git.showPushSuccessNotification": true,
-    "python.autoComplete.addBrackets": true,
-    "python.autoComplete.extraPaths": [
-        "${workspaceFolder}/.venv/Lib/site-packages/"
-    ],
-    "python.formatting.blackPath": "${workspaceFolder}/.venv/Scripts/black",
-    "python.linting.pylintPath": "${workspaceFolder}/.venv/Scripts/pylint",
-    "python.formatting.provider": "black",
-    "python.pythonPath": "${workspaceFolder}/.venv/Scripts/python",
-    "python.venvPath": "${workspaceFolder}/.venv",
-    "editor.formatOnType": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
+  "breadcrumbs.enabled": true,
+  "editor.formatOnSave": true,
+  "editor.renderWhitespace": "boundary",
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 110,
+  "git.postCommitCommand": "push",
+  "git.showPushSuccessNotification": true,
+  "python.autoComplete.addBrackets": true,
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/.venv/Lib/site-packages/"
+  ],
+  "python.formatting.blackPath": "${workspaceFolder}/.venv/Scripts/black",
+  "python.linting.pylintPath": "${workspaceFolder}/.venv/Scripts/pylint",
+  "python.formatting.provider": "black",
+  "python.pythonPath": "${workspaceFolder}/.venv/Scripts/python",
+  "python.venvPath": "${workspaceFolder}/.venv",
+  "editor.formatOnType": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true
 }

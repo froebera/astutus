@@ -1,0 +1,2 @@
+class NoRaidActive(Exception):
+    pass
