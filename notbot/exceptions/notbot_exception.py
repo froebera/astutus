@@ -1,0 +1,2 @@
+class NotbotException(Exception):
+    pass

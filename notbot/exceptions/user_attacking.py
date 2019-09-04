@@ -1,5 +1,5 @@
 from .notbot_exception import NotbotException
 
 
-class RaidAlreadyCleared(NotbotException):
+class UserAttacking(NotbotException):
     pass
