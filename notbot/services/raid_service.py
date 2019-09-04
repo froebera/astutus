@@ -2,7 +2,8 @@ import logging
 import arrow
 
 from ..context import Context, Module
-from ..db import RaidDao, get_raid_dao, QueueDao, get_queue_dao
+from ..db import RaidDao, get_raid_dao
+from .queue_service import QueueService, get_queue_service
 from ..exceptions import (
     RaidOnCooldown,
     RaidActive,
@@ -17,9 +18,6 @@ from ..cogs.util import (
     RAID_COUNTDOWNMESSAGE,
     RAID_RESET,
     RAID_REMINDED,
-    QUEUE_ACTIVE,
-    QUEUE_PROGRESS,
-    QUEUE_CURRENT_USERS,
 )
 
 from ..cogs.util import get_hms
@@ -31,14 +29,14 @@ logger = logging.getLogger(__name__)
 class RaidService(Module):
     def __init__(self):
         self.raid_dao: RaidDao = None
-        self.queue_dao: QueueDao = None
+        self.queue_service: QueueService = None
 
     def get_name(self):
         return MODULE_NAME
 
     def start(self, context: Context):
         self.raid_dao = get_raid_dao(context)
-        self.queue_dao = get_queue_dao(context)
+        self.queue_service = get_queue_service(context)
 
     async def create_raid_entry(self):
         pass
@@ -116,6 +114,15 @@ class RaidService(Module):
 
         return time_needed_to_clear
 
+    async def cancel_raid(self, guild_id):
+        raid_config = await self.get_raid_configuration(guild_id)
+        spawn = raid_config.get(RAID_SPAWN, None)
+        cooldown = raid_config.get(RAID_COOLDOWN, None)
+        if not any([spawn, cooldown]):
+            raise NoRaidActive()
+
+        await self._clear_current_raid_data(guild_id)
+
     async def get_raid_configuration(self, guild_id):
         return await self.raid_dao.get_raid_configuration(guild_id)
 
@@ -129,10 +136,7 @@ class RaidService(Module):
         ]:
             await self.raid_dao.del_key(guild_id, k)
 
-        await self.queue_dao.delete_queued_users(guild_id, "default")
-
-        for k in [QUEUE_ACTIVE, QUEUE_PROGRESS, QUEUE_CURRENT_USERS]:
-            await self.queue_dao.del_key(guild_id, "default", k)
+        await self.queue_service.reset_queue(guild_id, "default")
 
 
 def get_raid_service(context: Context) -> RaidService:

@@ -17,14 +17,14 @@ import arrow
 import discord
 import logging
 
-from ..services import RaidService, get_raid_service
+from ..services import RaidService, get_raid_service, get_queue_service
 from .converter.queue import Queue
 from .util import Duration, get_hms
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
 
-from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned
+from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned, UserAlreadyQueued, UserAttacking
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +72,7 @@ class RaidModule(commands.Cog):
         self.queue_dao = get_queue_dao(self.bot.context)
         self.raid_dao = get_raid_dao(self.bot.context)
         self.raid_service = get_raid_service(self.bot.context)
+        self.queue_service = get_queue_service(self.bot.context)
 
     def cog_unload(self):
         self.raid_timer.cancel()
@@ -379,18 +380,14 @@ class RaidModule(commands.Cog):
             time_needed_to_clear = await self.raid_service.clear_raid(ctx.guild.id, duration)
         except ValueError:
             raise commands.BadArgument("Cooldown end must be 60m after raid.")
-            return
         except NoRaidActive:
             raise commands.BadArgument("No raid to clear")
-            return
         except RaidAlreadyCleared:
             raise commands.BadArgument("Raid has been cleared already")
-            return
         except RaidUnspawned:
             raise commands.BadArgument(
                 f"Can't clear unspawned raid. Use **{ctx.prefix}raid cancel** to cancel it."
             )
-            return
         
         h, m, s = get_hms(time_needed_to_clear)
         cleared = f"**{h}**h **{m}**m **{s}**s"
@@ -406,39 +403,25 @@ class RaidModule(commands.Cog):
     @raid.command(name="cancel")
     @commands.check(has_raid_timer_permissions)
     async def raid_cancel(self, ctx):
-        raid_config = await self.raid_dao.get_raid_configuration(ctx.guild.id)
-        spawn = raid_config.get(RAID_SPAWN, None)
-        cd = raid_config.get(RAID_COOLDOWN, None)
-        if not any([spawn, cd]):
+        try:
+            await self.raid_service.cancel_raid(ctx.guild.id)
+        except NoRaidActive:
             raise commands.BadArgument("No raid to cancel")
-        
-        #TODO clear current raid in dao
-        await self.clear_current_raid(ctx.guild.id)
+
         await ctx.send("Cancelled the current raid.")
 
     @raid.group(name="queue", aliases=["q"], invoke_without_command=True)
     @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
-        queueconfig, queued_users = await asyncio.gather(
-            self.queue_dao.get_queue_configuration(ctx.guild.id, queue),
-            self.queue_dao.get_queued_users(ctx.guild.id, queue),
-            return_exceptions=True
-        )
-
-        current_users = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
-
-        if str(ctx.author.id) in queued_users:
-            raise commands.BadArgument(f"Sorry **{ctx.author.name}**, you are already **#{queued_users.index(str(ctx.author.id)) + 1}** in the queue")
-        elif str(ctx.author.id) in current_users:
+        try:
+            self.queue_service.queue_up(ctx.author.id, ctx.guild.id, queue)
+        except UserAlreadyQueued as err:
+            raise commands.BadArgument(f"Sorry **{ctx.author.name}**, you are already **#{err.queued_index + 1}** in the queue")
+        except UserAttacking:
             await ctx.send(f"**{ctx.author.name}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
-        else:
-            res = await self.queue_dao.add_user_to_queued_users(ctx.guild.id, queue, ctx.author.id)
-            queued_users.append(ctx.author.id)
-            if res:
-                await ctx.send(f":white_check_mark: Ok **{ctx.author.name}**, i've added you to the queue")
-            else:
-                ctx.send(f"Sorry **{ctx.author.name}**... Something went wrong. Please try to queue up again")
+
+        await ctx.send(f":white_check_mark: Ok **{ctx.author.name}**, i've added you to the queue")
 
     @raid_queue.command(name="show")
     @commands.check(raidconfig_exists)
