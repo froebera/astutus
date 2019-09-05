@@ -13,6 +13,10 @@ from .db import RedisConnection, RaidDao, QueueDao, PostgresConnection
 from .services import EfficiencyService
 
 from .notbot import NOTBOT
+from .cogs.raid import RaidModule
+from .cogs.info import InfoModule
+from .cogs.admin import AdminModule
+from .cogs.efficiency import EfficiencyModule
 
 
 def apply_overwrite(node: dict, key, value):
@@ -51,36 +55,23 @@ def setup_logging():
         logging.basicConfig(level="INFO")
 
 
-def get_config(configuration_file: str = "default_config.ini"):
-    config = configparser.ConfigParser()
-    config.read("default_config.ini")
-    if configuration_file != "default_config.ini":
-        config.read(configuration_file)
-    return config
+# def get_config(configuration_file: str = "default_config.ini"):
+#     config = configparser.ConfigParser()
+#     config.read("default_config.ini")
+#     if configuration_file != "default_config.ini":
+#         config.read(configuration_file)
+#     return config
 
 
 setup_logging()
 
-cfg = get_config("config.ini")
-
-# context = Context(
-#     {
-#         "redis_connection": RedisConnection(cfg["REDIS"]),
-#         # "postgres_connection": PostgresConnection(cfg["POSTGRESQL"]),
-#         "raid_dao": RaidDao(),
-#         "queue_dao": QueueDao()
-#         #
-#     }
-# )
-context = Context(
-    [
-        RedisConnection(cfg["REDIS"]),
-        # PostgresConnection(cfg["POSTGRESQL"]),
-        RaidDao(),
-        QueueDao(),
-        EfficiencyService(),
-    ]
+context = (
+    Context()
+    .with_module(RaidModule)
+    .with_module(InfoModule)
+    .with_module(AdminModule)
+    .with_module(EfficiencyModule)
 )
 
-context.start()
-bot = NOTBOT(config=cfg, ctx=context)
+# context.start()
+bot = NOTBOT(ctx=context)

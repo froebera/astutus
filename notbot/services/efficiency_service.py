@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class EfficiencyService(Module):
-    def __init__(self):
+    def __init__(self, context: Context):
         self.base = 320
         self.card_perc = 1.00795
         self.treshold_1 = 50
@@ -20,9 +20,6 @@ class EfficiencyService(Module):
 
     def get_name(self):
         return MODULE_NAME
-
-    def start(self, context: Context):
-        pass
 
     def calculate_estimated_damage(
         self, player_raid_level: int, total_card_levels: int
@@ -75,4 +72,6 @@ class EfficiencyService(Module):
 
 
 def get_efficiency_service(context: Context) -> EfficiencyService:
-    return context.get_module(MODULE_NAME)
+    return context.get_or_register_module(
+        MODULE_NAME, lambda: EfficiencyService(context)
+    )

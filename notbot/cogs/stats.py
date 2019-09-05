@@ -1,10 +1,13 @@
 from discord.ext import commands
 from csv import DictReader
+from ..context import Context, Module
+
+MODULE_NAME = "stats_module"
 
 
-class StatsCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class StatsModule(commands.Cog, Module):
+    def __init__(self, context: Context):
+        self.bot = context.get_bot()
 
     @commands.group(name="stats", invoke_without_command=True)
     async def stats(self, ctx):
@@ -32,4 +35,8 @@ class StatsCog(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(StatsCog(bot))
+    context: Context = bot.context
+
+    stats_module = context.get_module(MODULE_NAME)
+    bot.add_cog(stats_module)
+

@@ -7,15 +7,19 @@ from discord.ext import commands
 from discord import Role, Emoji, User, Status
 from .util import create_embed
 from .converter import GlobalUserConverter
-
+from ..context import Context, Module
 
 logger = logging.getLogger(__name__)
 
+MODULE_NAME = "info_module"
 
-class InfoModule(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class InfoModule(commands.Cog, Module):
+    def __init__(self, context: Context):
+        self.bot = context.get_bot()
         self.process = psutil.Process()
+
+    def get_name(self):
+        return MODULE_NAME
 
     @commands.command(
         name="rolecount",
@@ -180,6 +184,8 @@ class InfoModule(commands.Cog):
                     embed.add_field(name=issue_title, value=issue_body, inline=False)
         await ctx.send(embed=embed)
 
-
 def setup(bot):
-    bot.add_cog(InfoModule(bot))
+    context: Context = bot.context
+
+    info_module = context.get_module(MODULE_NAME)
+    bot.add_cog(info_module)

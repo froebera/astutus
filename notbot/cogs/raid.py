@@ -22,6 +22,7 @@ from .util import Duration, get_hms
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
+from notbot.context import Context, Module
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +63,18 @@ TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES, RAID_CLAN_ROLES]
 QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
 
-class RaidModule(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+MODULE_NAME = "raid_cog"
+
+class RaidModule(commands.Cog, Module):
+    
+    def __init__(self, context: Context):
+        self.bot = context.get_bot()
         self.raid_timer.start()
-        self.queue_dao = get_queue_dao(self.bot.context)
-        self.raid_dao = get_raid_dao(self.bot.context)
+        self.queue_dao = get_queue_dao(context)
+        self.raid_dao = get_raid_dao(context)
+
+    def get_name(self):
+        return MODULE_NAME
 
     def cog_unload(self):
         self.raid_timer.cancel()
@@ -727,4 +734,7 @@ class RaidModule(commands.Cog):
             return value
 
 def setup(bot):
-    bot.add_cog(RaidModule(bot))
+    context: Context = bot.context
+
+    raid_module = context.get_module(MODULE_NAME)
+    bot.add_cog(raid_module)
