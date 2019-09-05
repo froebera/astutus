@@ -14,7 +14,6 @@ import aiohttp
 
 # from utils import chat_formatting
 
-
 class CogNotFoundError(Exception):
     pass
 

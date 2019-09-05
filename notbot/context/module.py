@@ -1,10 +1,6 @@
-import abc
-
-
-class Module(abc.ABC):
-    @abc.abstractmethod
-    def start(self, context):
+class Module:
+    def start(self):
         pass
 
     def get_name(self):
-        pass
+        raise Exception(f"Module does not implement get_name")

@@ -20,11 +20,8 @@ MODULE_NAME = "queue_dao"
 
 
 class QueueDao(Module):
-    def __init__(self):
-        self.connection: RedisConnection = None
-
-    def start(self, context: Context):
-        self.connection = get_redis_connection(context).get_connection()
+    def __init__(self, context: Context):
+        self.connection: get_redis_connection(context)
 
     def get_name(self):
         return MODULE_NAME
@@ -125,4 +122,5 @@ class QueueDao(Module):
 
 
 def get_queue_dao(context: Context) -> QueueDao:
-    return context.get_module(MODULE_NAME)
+    return context.get_or_register_module(MODULE_NAME, lambda: QueueDao(context))
+

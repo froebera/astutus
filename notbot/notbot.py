@@ -2,16 +2,16 @@ import logging
 import traceback
 import discord
 from discord.ext import commands
+from .services import get_config_service
+from .context import Context
 
 extension_prefix = "notbot."
 extensions = [
     "cogs.raid",
-    "cogs.admin",
     "cogs.info",
+    "cogs.admin",
     "cogs.efficiency"
     # "cogs.stats",
-    # "cogs.test",
-    # "cogs.help"
 ]
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ async def prefix_callable(bot, message) -> list:
     user_id = bot.user.id
     prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
     if message.guild is not None:
-        prefix_base.append(bot.config["DEFAULT"]["prefix"])
+        prefix_base.append(bot.default_prefix)
     #     custom = await bot.db.hget(f"{message.guild.id}:set", "pfx")
     #     if custom or custom is not None:
     #         prefix_base.append(custom)
@@ -35,17 +35,18 @@ async def prefix_callable(bot, message) -> list:
 
 
 class NOTBOT(commands.AutoShardedBot):
-    def __init__(self, config, ctx):
+    def __init__(self, ctx: Context):
         super().__init__(
             command_prefix=prefix_callable,
             description="",
             pm_help=None,
             fetch_offline_members=True,
         )
-        self.config = config
-        self.db = None
-        self.context = ctx
-
+        self.context: Context = ctx
+        self.context.set_bot(self)
+        self.context.start()
+        config_service = get_config_service(ctx)
+        self.default_prefix = config_service.get_config("DEFAULT")["prefix"]
         # self.remove_command("help")
         for extension in extensions:
             e = extension_prefix + extension
@@ -59,7 +60,8 @@ class NOTBOT(commands.AutoShardedBot):
         logger.info("Ready: %s (ID: %s)", self.user, self.user.id)
 
     def run(self):
-        token = self.config["DEFAULT"]["token"]
+        config_service = get_config_service(self.context)
+        token = config_service.get_config("DEFAULT")["token"]
         super().run(token, reconnect=True)
 
     async def on_command_error(self, ctx, error):
@@ -87,7 +89,6 @@ class NOTBOT(commands.AutoShardedBot):
             await ctx.send(f":warning: I need permission to {perms} for this to work.")
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            # TODO Find usage for cmd ?
             await ctx.send(f":negative_squared_cross_mark: {error}")
 
         elif isinstance(error, commands.CommandNotFound):

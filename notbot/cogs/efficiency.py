@@ -8,12 +8,19 @@ from ..services import get_raid_stat_service
 
 logger = logging.getLogger(__name__)
 
+from ..context import Context, Module
 
-class EfficiencyCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.efficiency_service = get_efficiency_service(bot.context)
-        self.raid_stat_service = get_raid_stat_service(bot.context)
+MODULE_NAME = "efficiency_module"
+
+
+class EfficiencyModule(commands.Cog, Module):
+    def __init__(self, context: Context):
+        self.bot = context.get_bot()
+        self.efficiency_service = get_efficiency_service(context)
+        self.raid_stat_service = get_raid_stat_service(context)
+
+    def get_name(self):
+        return MODULE_NAME
 
     @commands.command(
         name="estimate",
@@ -77,4 +84,7 @@ class EfficiencyCog(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(EfficiencyCog(bot))
+    context: Context = bot.context
+
+    efficiency_module = context.get_module(MODULE_NAME)
+    bot.add_cog(efficiency_module)

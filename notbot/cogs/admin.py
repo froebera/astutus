@@ -1,13 +1,50 @@
 from discord.ext import tasks
 from discord.ext import commands
+import importlib
+import os
+import glob
+import logging
 
-from notbot.db import get_redis_connection
+from notbot.db import get_redis_connection, RedisConnection, Redis
+
+from ..context import Context, Module
+
+logger = logging.getLogger(__name__)
+
+MODULE_NAME = "admin_module"
 
 
-class AdminModule(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.redis_connection = get_redis_connection(self.bot.context).get_connection()
+class CogNotFoundError(Exception):
+    pass
+
+
+class CogLoadError(Exception):
+    pass
+
+
+class NoSetupError(CogLoadError):
+    pass
+
+
+class CogUnloadError(Exception):
+    pass
+
+
+class OwnerUnloadWithoutReloadError(CogUnloadError):
+    pass
+
+
+class AdminModule(commands.Cog, Module):
+    def __init__(self, context: Context):
+        self.bot = context.get_bot()
+        self.redis_connection_module = get_redis_connection(context)
+        self.redis_connection: Redis = None
+
+    def start(self):
+        self.redis_connection = self.redis_connection_module.get_connection()
+
+    def get_name(self):
+        return MODULE_NAME
 
     @commands.is_owner()
     @commands.group(name="admin")
@@ -29,4 +66,7 @@ class AdminModule(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(AdminModule(bot))
+    context: Context = bot.context
+
+    admin_module = context.get_module(MODULE_NAME)
+    bot.add_cog(admin_module)
