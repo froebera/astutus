@@ -1,5 +1,6 @@
 from notbot.context import Module, Context
 from .redis_connection import RedisConnection, get_redis_connection
+from .redis import Redis
 
 from notbot.cogs.util import (
     QUEUE_CONFIG_KEY,
@@ -21,7 +22,11 @@ MODULE_NAME = "queue_dao"
 
 class QueueDao(Module):
     def __init__(self, context: Context):
-        self.connection: get_redis_connection(context)
+        self.redis_connection_module = get_redis_connection(context)
+        self.connection: Redis = None
+
+    def start(self):
+        self.connection = self.redis_connection_module.get_connection()
 
     def get_name(self):
         return MODULE_NAME

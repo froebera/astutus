@@ -18,7 +18,7 @@ import discord
 import logging
 
 from .converter.queue import Queue
-from .util import Duration, get_hms
+from .util import Duration, get_hms, create_embed
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
@@ -114,7 +114,7 @@ class RaidModule(commands.Cog, Module):
         reset = int(current_raid_config.get(RAID_RESET, 0))
         messageid = current_raid_config.get(RAID_COUNTDOWNMESSAGE, None)
         reminded = int(current_raid_config.get(RAID_REMINDED, 0))
-        permitted_roles = current_raid_config.get(RAID_MANAGEMENT_ROLES, None)
+        permitted_roles = current_raid_config.get(RAID_MANAGEMENT_ROLES, "")
 
         if announcement_channel is None:
             raise asyncio.CancelledError
@@ -484,6 +484,7 @@ class RaidModule(commands.Cog, Module):
         )
 
         queue_size = int(queueconfig.get(QUEUE_SIZE, 1))
+        current_attacker_ids = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
         clusters = zip_longest(*[iter(queued_users)] * queue_size, fillvalue=None)
 
         result = []
@@ -492,18 +493,42 @@ class RaidModule(commands.Cog, Module):
             r = []
             for u in c:
                 if u is not None:
-                    ux = await self.bot.fetch_user(int(u))
-                    r.append(f"{ux}")
+                    ux = self.bot.get_user(int(u))
+                    r.append(f"{ux.mention}")
             result.append(temp + ". " + ", ".join(r))
             
         queue_name = queueconfig.get(QUEUE_NAME, None)
+
+        current_attackers = []
+        for current_attacker_id in current_attacker_ids:
+            user = self.bot.get_user(int(current_attacker_id))
+            current_attackers.append(f"{user.mention}")
+
+        current_attackers_formatted = ", ".join(current_attackers)
         
-        if result:
-            await ctx.send(
-                "**Queue** for **{}**:\n```css\n{}```\nUse **{}raid unqueue {}** to cancel.".format(
-                   queue_name if queue_name else queue, result and "\n".join(result) or " ", ctx.prefix, queue
-                )
+        if result or current_attackers_formatted:
+            embed = create_embed(ctx.bot)
+            embed.title = f"**Queue** for **{queue_name if queue_name else queue}**:" 
+
+            if current_attackers_formatted:
+                embed.add_field(name="Current attackers", value=current_attackers_formatted, inline=False)
+                pass
+            if result:
+                embed.add_field(name="Queued members", value="\n".join(result), inline=False)
+                pass
+
+            embed.set_footer(
+                text="Use **{}raid unqueue {}** to unqueue".format(ctx.prefix, queue_name), icon_url=self.bot.user.avatar_url
             )
+
+            embed.colour = 0x9e5db7
+
+            await ctx.send(embed=embed)
+            # await ctx.send(
+            #     "**Queue** for **{}**:\nCurrent Attackers:\n```css\n{}```\nQueued Members:\n```css\n{}```\nUse **{}raid unqueue {}** to cancel.".format(
+            #        queue_name if queue_name else queue, current_attackers_formatted if current_attackers_formatted else "", result and "\n".join(result) or "", ctx.prefix, queue
+            #     )
+            # )
         else:
             await ctx.send(f"Queue **{queue_name if queue_name else queue}** is currently empty")
 
