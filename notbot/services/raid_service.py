@@ -27,16 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 class RaidService(Module):
-    def __init__(self):
-        self.raid_dao: RaidDao = None
-        self.queue_service: QueueService = None
+    def __init__(self, context: Context):
+        self.raid_dao = get_raid_dao(context)
+        self.queue_service = get_queue_service(context)
 
     def get_name(self):
         return MODULE_NAME
-
-    def start(self, context: Context):
-        self.raid_dao = get_raid_dao(context)
-        self.queue_service = get_queue_service(context)
 
     async def create_raid_entry(self):
         pass
@@ -140,4 +136,4 @@ class RaidService(Module):
 
 
 def get_raid_service(context: Context) -> RaidService:
-    return context.get_module(MODULE_NAME)
+    return context.get_or_register_module(MODULE_NAME, lambda: RaidService(context))

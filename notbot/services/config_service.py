@@ -1,12 +1,14 @@
 from typing import List
 import configparser
 from ..context import Context, Module
+import logging
 
+logger = logging.getLogger(__name__)
 MODULE_NAME = "config_service"
 
 
 class ConfigService(Module):
-    def __init__(self):
+    def __init__(self, context: Context):
         self.config: List[str] = None
 
     def get_name(self):
@@ -27,4 +29,4 @@ class ConfigService(Module):
 
 
 def get_config_service(context: Context) -> ConfigService:
-    return context.get_or_register_module(MODULE_NAME, lambda: ConfigService())
+    return context.get_or_register_module(MODULE_NAME, lambda: ConfigService(context))

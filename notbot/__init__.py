@@ -9,8 +9,6 @@ import discord
 import logging
 from discord.ext import commands
 from .context import Context
-from .db import RedisConnection, RaidDao, QueueDao, PostgresConnection
-from .services import EfficiencyService, RaidStatService, RaidService, QueueService
 
 from .notbot import NOTBOT
 from .cogs.raid import RaidModule

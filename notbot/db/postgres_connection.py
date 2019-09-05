@@ -1,19 +1,22 @@
 from notbot.context import Context, Module
 import asyncio
 import asyncpg
+from notbot.services.config_service import get_config_service
 
 MODULE_NAME = "postgres_connection"
 
 
 class PostgresConnection(Module):
-    def __init__(self, postgres_configuration):
-        self.postgres_configuration = postgres_configuration
+    def __init__(self, context: Context):
+        self.config_service = get_config_service(context)
+        self.postgres_configuration = None
         self.pool = None
 
     def get_name(self):
         return MODULE_NAME
 
-    def start(self, context: Context):
+    def start(self):
+        self.postgres_configuration = self.config_service.get_config("POSTGRESQL")
         uri = "{}://{}:{}@{}:{}/{}".format(
             self.postgres_configuration["protocol"] or "postgresql",
             self.postgres_configuration["username"],
@@ -30,7 +33,9 @@ class PostgresConnection(Module):
 
 
 def get_postgres_connection(context: Context) -> PostgresConnection:
-    return context.get_module(MODULE_NAME)
+    return context.get_or_register_module(
+        MODULE_NAME, lambda: PostgresConnection(context)
+    )
 
 
 async def init_db(uri):

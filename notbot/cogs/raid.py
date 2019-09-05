@@ -69,14 +69,15 @@ QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
 MODULE_NAME = "raid_cog"
 
 class RaidModule(commands.Cog, Module):
-    
     def __init__(self, context: Context):
         self.bot = context.get_bot()
-        self.raid_timer.start()
         self.queue_dao = get_queue_dao(context)
         self.raid_dao = get_raid_dao(context)
         self.raid_service = get_raid_service(context)
         self.queue_service = get_queue_service(context)
+
+    def start(self):
+        self.raid_timer.start()
 
     def get_name(self):
         return MODULE_NAME

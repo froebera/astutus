@@ -9,14 +9,11 @@ MODULE_NAME = "queue_service"
 
 
 class QueueService(Module):
-    def __init__(self):
-        self.queue_dao: QueueDao = None
+    def __init__(self, context: Context):
+        self.queue_dao = get_queue_dao(context)
 
     def get_name(self):
         return MODULE_NAME
-
-    def start(self, context: Context):
-        self.queue_dao = get_queue_dao(context)
 
     async def reset_queue(self, guild_id, queue_name):
         await self.queue_dao.delete_queued_users(guild_id, queue_name)
@@ -49,4 +46,4 @@ class QueueService(Module):
 
 
 def get_queue_service(context: Context) -> QueueService:
-    return context.get_module(MODULE_NAME)
+    return context.get_or_register_module(MODULE_NAME, lambda: QueueService(context))

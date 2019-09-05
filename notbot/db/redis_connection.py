@@ -1,7 +1,7 @@
 import asyncio
 from .redis import Redis
 from notbot.context import Module, Context
-from ..services import ConfigService, get_config_service
+from ..services.config_service import get_config_service
 
 MODULE_NAME = "redis_connection"
 CONFIG_KEY = "REDIS"

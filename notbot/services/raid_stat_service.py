@@ -9,14 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class RaidStatService(Module):
-    def __init__(self):
-        self.postgres_connection = None
+    def __init__(self, context: Context):
+        self.postgres_connection = get_postgres_connection(context)
 
     def get_name(self):
         return MODULE_NAME
-
-    def start(self, context: Context):
-        self.postgres_connection = get_postgres_connection(context)
 
     async def save_raid_player_attacks(self, attacks: List[RaidPlayerAttack]):
         async with self.postgres_connection.pool.acquire() as connection:
@@ -57,4 +54,4 @@ class RaidStatService(Module):
 
 
 def get_raid_stat_service(context: Context) -> RaidStatService:
-    return context.get_module(MODULE_NAME)
+    return context.get_or_register_module(MODULE_NAME, lambda: RaidStatService(context))
