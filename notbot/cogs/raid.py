@@ -518,7 +518,7 @@ class RaidModule(commands.Cog, Module):
                 pass
 
             embed.set_footer(
-                text="Use **{}raid unqueue {}** to unqueue".format(ctx.prefix, queue_name), icon_url=self.bot.user.avatar_url
+                text="Use {}raid unqueue {} to unqueue".format(ctx.prefix, queue_name), icon_url=self.bot.user.avatar_url
             )
 
             embed.colour = 0x9e5db7
