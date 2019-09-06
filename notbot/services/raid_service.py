@@ -2,7 +2,13 @@ import logging
 import arrow
 
 from ..context import Context, Module
-from ..db import RaidDao, get_raid_dao
+from ..db import (
+    RaidDao,
+    get_raid_dao,
+    get_raid_postgres_dao,
+    get_postgres_connection,
+    get_redis_connection,
+)
 from .queue_service import QueueService, get_queue_service
 from ..exceptions import (
     RaidOnCooldown,
@@ -30,12 +36,12 @@ class RaidService(Module):
     def __init__(self, context: Context):
         self.raid_dao = get_raid_dao(context)
         self.queue_service = get_queue_service(context)
+        self.raid_postgres_dao = get_raid_postgres_dao(context)
+        self.postgres_connection = get_postgres_connection(context)
+        self.redis_connection = get_redis_connection(context)
 
     def get_name(self):
         return MODULE_NAME
-
-    async def create_raid_entry(self):
-        pass
 
     async def get_announcement_channel_id(self, guild_id):
         return await self.raid_dao.get_announcement_channel_id(guild_id)
@@ -58,6 +64,7 @@ class RaidService(Module):
 
         await self._clear_current_raid_data(guild_id)
         await self.raid_dao.set_raid_spawn(guild_id, raid_start.timestamp)
+        await self.raid_postgres_dao.create_raid_stat_entry(guild_id, raid_start)
 
     async def clear_raid(self, guild_id, raid_cooldown_end: arrow.Arrow):
         """
@@ -108,6 +115,10 @@ class RaidService(Module):
         await self._clear_current_raid_data(guild_id)
         await self.raid_dao.set_raid_cooldown(guild_id, raid_cooldown_end.timestamp)
 
+        await self.raid_postgres_dao.complete_last_raid_stat_entry(
+            guild_id, raid_cooldown_start
+        )
+
         return time_needed_to_clear
 
     async def cancel_raid(self, guild_id):
@@ -118,6 +129,7 @@ class RaidService(Module):
             raise NoRaidActive()
 
         await self._clear_current_raid_data(guild_id)
+        await self.raid_postgres_dao.delete_last_raid_entry(guild_id)
 
     async def get_raid_configuration(self, guild_id):
         return await self.raid_dao.get_raid_configuration(guild_id)

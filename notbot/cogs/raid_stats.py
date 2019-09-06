@@ -5,7 +5,7 @@ from ..context import Context, Module
 MODULE_NAME = "stats_module"
 
 
-class StatsModule(commands.Cog, Module):
+class RaidStatsModule(commands.Cog, Module):
     def __init__(self, context: Context):
         self.bot = context.get_bot()
 

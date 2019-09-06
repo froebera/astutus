@@ -1,16 +1,31 @@
+from typing import Union
 import logging
 from discord.ext import commands
-from ..services import get_efficiency_service
+from ..services import (
+    get_efficiency_service,
+    get_raid_stat_service,
+    EFFICIENCY_CONFIG_KEYS,
+)
 from .util import num_to_hum
 from csv import DictReader
 from ..models import RaidPlayerAttack, RaidPlayerStat
-from ..services import get_raid_stat_service
+from .checks import has_raid_management_permissions
 
 logger = logging.getLogger(__name__)
 
 from ..context import Context, Module
 
 MODULE_NAME = "efficiency_module"
+
+
+class EfficiencyConfigKey(commands.Converter):
+    async def convert(self, ctx, argument):
+        if argument in EFFICIENCY_CONFIG_KEYS:
+            return argument
+
+        raise commands.BadArgument(
+            f"Config key must be one of {', '.join(EFFICIENCY_CONFIG_KEYS)} "
+        )
 
 
 class EfficiencyModule(commands.Cog, Module):
@@ -53,34 +68,55 @@ class EfficiencyModule(commands.Cog, Module):
     reupload stats ( to fix upsies )
     """
 
-    @commands.command(name="upload_test")
-    async def upload_test(self, ctx, *, stuff):
-        result = []
-        for row in DictReader(stuff.split("\n")):
-            result.append(
-                RaidPlayerAttack(
-                    1,
-                    str(row["ID"]),
-                    str(row["Name"]),
-                    int(row["Attacks"]),
-                    int(row["Damage"]),
-                )
-            )
-        await self.raid_stat_service.save_raid_player_attacks(result)
+    # @commands.command(name="upload_test")
+    # async def upload_test(self, ctx, *, stuff):
+    #     result = []
+    #     for row in DictReader(stuff.split("\n")):
+    #         result.append(
+    #             RaidPlayerAttack(
+    #                 1,
+    #                 str(row["ID"]),
+    #                 str(row["Name"]),
+    #                 int(row["Attacks"]),
+    #                 int(row["Damage"]),
+    #             )
+    #         )
+    #     await self.raid_stat_service.save_raid_player_attacks(result)
 
-    @commands.command(name="upload_stats")
-    async def upload_stats(self, ctx, *, stats):
-        result = []
-        for row in DictReader(stats.split("\n")):
-            result.append(
-                RaidPlayerStat(
-                    1,
-                    str(row["ID"]),
-                    int(row["Raid total card level"]),
-                    int(row["Raid player level"]),
-                )
-            )
-        await self.raid_stat_service.save_raid_player_stats(result)
+    # @commands.command(name="upload_stats")
+    # async def upload_stats(self, ctx, *, stats):
+    #     result = []
+    #     for row in DictReader(stats.split("\n")):
+    #         result.append(
+    #             RaidPlayerStat(
+    #                 1,
+    #                 str(row["ID"]),
+    #                 int(row["Raid total card level"]),
+    #                 int(row["Raid player level"]),
+    #             )
+    #         )
+    #     await self.raid_stat_service.save_raid_player_stats(result)
+
+    @commands.group(name="efficiencyconfig")
+    @commands.check(has_raid_management_permissions)
+    async def efficiency_config(self, ctx):
+        pass
+
+    @efficiency_config.command(name="show")
+    @commands.check(has_raid_management_permissions)
+    async def efficiency_config_show(self, ctx):
+        efficiency_config = self.efficiency_service.get_efficiency_config()
+
+        tmp = []
+        for key, value in efficiency_config.items():
+            tmp.append(f"**{key}**: {value}")
+
+        await ctx.send("**Efficiency configuration**:\n\n{}".format("\n".join(tmp)))
+
+    @efficiency_config.command(name="set")
+    @commands.check(has_raid_management_permissions)
+    async def efficiency_config_set(self, ctx, key: , value):
+        pass
 
 
 def setup(bot):

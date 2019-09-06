@@ -72,4 +72,4 @@ context = (
 )
 
 # context.start()
-bot = NOTBOT(ctx=context)
+# bot = NOTBOT(ctx=context)

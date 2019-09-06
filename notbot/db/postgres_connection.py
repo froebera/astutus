@@ -2,6 +2,7 @@ from notbot.context import Context, Module
 import asyncio
 import asyncpg
 from notbot.services.config_service import get_config_service
+from asyncpg.pool import Pool
 
 MODULE_NAME = "postgres_connection"
 
@@ -10,7 +11,7 @@ class PostgresConnection(Module):
     def __init__(self, context: Context):
         self.config_service = get_config_service(context)
         self.postgres_configuration = None
-        self.pool = None
+        self.pool: Pool = None
 
     def get_name(self):
         return MODULE_NAME
@@ -87,4 +88,7 @@ _alter_statements = [
     "ALTER TABLE raid ADD COLUMN IF NOT EXISTS started_at DATE",
     "DROP TABLE IF EXISTS raid_attack_conclusion",
     "ALTER TABLE raid_player_attack ADD COLUMN IF NOT EXISTS player_name TEXT",
+    "ALTER TABLE raid ALTER COLUMN guild_id SET NOT NULL",
+    "ALTER TABLE raid ALTER COLUMN started_at TYPE timestamptz",
+    "ALTER TABLE raid ALTER COLUMN cleared_at TYPE timestamptz",
 ]

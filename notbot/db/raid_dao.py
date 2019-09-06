@@ -44,7 +44,7 @@ class RaidDao(Module):
         )
 
     async def get_announcement_channel_id(self, guild_id):
-        return await self.connection.hget(
+        return await self.redis_connection.hget(
             RAID_CONFIG_KEY.format(guild_id), RAID_ANNOUNCEMENTCHANNEL
         )
 
