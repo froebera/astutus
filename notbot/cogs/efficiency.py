@@ -6,7 +6,13 @@ from ..services import (
     get_raid_stat_service,
     EFFICIENCY_CONFIG_KEYS,
 )
-from .util import num_to_hum
+from .util import (
+    num_to_hum,
+    EFFICIENCY_CARD_PERC,
+    EFFICIENCY_REDUCTION1,
+    EFFICIENCY_REDUCTION2,
+)
+
 from csv import DictReader
 from ..models import RaidPlayerAttack, RaidPlayerStat
 from .checks import has_raid_management_permissions
@@ -115,8 +121,22 @@ class EfficiencyModule(commands.Cog, Module):
 
     @efficiency_config.command(name="set")
     @commands.check(has_raid_management_permissions)
-    async def efficiency_config_set(self, ctx, key: , value):
-        pass
+    async def efficiency_config_set(
+        self, ctx, config_key: Union[EfficiencyConfigKey], value
+    ):
+        if config_key in [
+            EFFICIENCY_CARD_PERC,
+            EFFICIENCY_REDUCTION1,
+            EFFICIENCY_REDUCTION2,
+        ]:
+            converted_value = float(value)
+        else:
+            converted_value = int(value)
+
+        await self.efficiency_service.set_efficiency_config_value(config_key, converted_value)
+        await ctx.send(
+            f":white_check_mark: Successfully set **{config_key}** to {converted_value}"
+        )
 
 
 def setup(bot):

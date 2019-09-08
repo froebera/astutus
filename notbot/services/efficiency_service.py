@@ -1,19 +1,19 @@
+import logging
+import asyncio
 from math import pow
 from ..context import Context, Module
 from ..db import get_redis_connection, Redis
-import asyncio
 from notbot.cogs.util import (
-    EFFICIENCY_KEY
-    EFFICIENCY_BASE
-    EFFICIENCY_CARD_PERC
-    EFFICIENCY_TRESHOLD1
-    EFFICIENCY_TRESHOLD2
-    EFFICIENCY_REDUCTION1
-    EFFICIENCY_REDUCTION2
-    EFFICIENCY_CARDS_TOTAL
+    EFFICIENCY_KEY,
+    EFFICIENCY_BASE,
+    EFFICIENCY_CARD_PERC,
+    EFFICIENCY_TRESHOLD1,
+    EFFICIENCY_TRESHOLD2,
+    EFFICIENCY_REDUCTION1,
+    EFFICIENCY_REDUCTION2,
+    EFFICIENCY_CARDS_TOTAL,
 )
 
-import logging
 
 MODULE_NAME = "efficiency_service"
 
@@ -34,7 +34,7 @@ EFFICIENCY_CONFIG_KEYS = [
 class EfficiencyService(Module):
     def __init__(self, context: Context):
         self.redis_connection_module = get_redis_connection(context)
-        self.redis_connection: Redis = None
+        self.redis_connection: Redis
 
         self.efficiency_config = {}
 
@@ -79,42 +79,54 @@ class EfficiencyService(Module):
 
     async def set_efficiency_config_value(self, key, value):
         await self.redis_connection.hset(EFFICIENCY_KEY, key, value)
-        self.efficiency_config.update[key] = value
-
+        self.efficiency_config[key] = value
 
     def calculate_estimated_damage(
         self, player_raid_level: int, total_card_levels: int
     ):
         cards_up_to_t1 = (
-            self.treshold_1
-            if total_card_levels >= self.treshold_1
+            self.efficiency_config[EFFICIENCY_TRESHOLD1]
+            if total_card_levels >= self.efficiency_config[EFFICIENCY_TRESHOLD1]
             else total_card_levels
         )
         cards_between_t1_and_t2 = (
             0
-            if total_card_levels <= self.treshold_1
+            if total_card_levels <= self.efficiency_config[EFFICIENCY_TRESHOLD1]
             else (
-                self.treshold_2 - self.treshold_1
-                if total_card_levels >= self.treshold_2
-                else total_card_levels - self.treshold_1
+                self.efficiency_config[EFFICIENCY_TRESHOLD2]
+                - self.efficiency_config[EFFICIENCY_TRESHOLD1]
+                if total_card_levels >= self.efficiency_config[EFFICIENCY_TRESHOLD2]
+                else total_card_levels - self.efficiency_config[EFFICIENCY_TRESHOLD1]
             )
         )
         cards_above_t2 = (
             0
-            if total_card_levels <= self.treshold_2
-            else total_card_levels - self.treshold_2
+            if total_card_levels <= self.efficiency_config[EFFICIENCY_TRESHOLD2]
+            else total_card_levels - self.efficiency_config[EFFICIENCY_TRESHOLD2]
         )
 
         estimated_dmg = (
-            self.base
+            self.efficiency_config[EFFICIENCY_BASE]
             * (player_raid_level / 100 + 0.99)
             * (
                 1
-                + pow(self.card_perc, (cards_up_to_t1 - self.cards_total))
+                + pow(
+                    self.efficiency_config[EFFICIENCY_CARD_PERC],
+                    (cards_up_to_t1 - self.efficiency_config[EFFICIENCY_CARDS_TOTAL]),
+                )
                 - 1
-                + pow(self.card_perc, pow(cards_between_t1_and_t2, self.reduction_1))
+                + pow(
+                    self.efficiency_config[EFFICIENCY_CARD_PERC],
+                    pow(
+                        cards_between_t1_and_t2,
+                        self.efficiency_config[EFFICIENCY_REDUCTION1],
+                    ),
+                )
                 - 1
-                + pow(self.card_perc, pow(cards_above_t2, self.reduction_2))
+                + pow(
+                    self.efficiency_config[EFFICIENCY_CARD_PERC],
+                    pow(cards_above_t2, self.efficiency_config[EFFICIENCY_REDUCTION2]),
+                )
                 - 1
             )
         ) * 1000
