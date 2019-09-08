@@ -62,9 +62,9 @@ class RaidService(Module):
         if spawn:
             raise RaidActive()
 
+        await self.raid_postgres_dao.create_raid_stat_entry(guild_id, raid_start)
         await self._clear_current_raid_data(guild_id)
         await self.raid_dao.set_raid_spawn(guild_id, raid_start.timestamp)
-        await self.raid_postgres_dao.create_raid_stat_entry(guild_id, raid_start)
 
     async def clear_raid(self, guild_id, raid_cooldown_end: arrow.Arrow):
         """
@@ -112,12 +112,12 @@ class RaidService(Module):
             )
             raise ValueError("Raid cooldown must be 60m after spawn")
 
-        await self._clear_current_raid_data(guild_id)
-        await self.raid_dao.set_raid_cooldown(guild_id, raid_cooldown_end.timestamp)
-
         await self.raid_postgres_dao.complete_last_raid_stat_entry(
             guild_id, raid_cooldown_start
         )
+
+        await self._clear_current_raid_data(guild_id)
+        await self.raid_dao.set_raid_cooldown(guild_id, raid_cooldown_end.timestamp)
 
         return time_needed_to_clear
 
@@ -128,8 +128,8 @@ class RaidService(Module):
         if not any([spawn, cooldown]):
             raise NoRaidActive()
 
-        await self._clear_current_raid_data(guild_id)
         await self.raid_postgres_dao.delete_last_raid_entry(guild_id)
+        await self._clear_current_raid_data(guild_id)
 
     async def get_raid_configuration(self, guild_id):
         return await self.raid_dao.get_raid_configuration(guild_id)
