@@ -12,6 +12,7 @@ from notbot.cogs.util import (
     EFFICIENCY_REDUCTION1,
     EFFICIENCY_REDUCTION2,
     EFFICIENCY_CARDS_TOTAL,
+    EFFICIENCY_LETHAL_BONUS,
 )
 
 
@@ -71,6 +72,9 @@ class EfficiencyService(Module):
         self.efficiency_config[EFFICIENCY_CARDS_TOTAL] = efficiency_config.get(
             EFFICIENCY_CARDS_TOTAL, 23
         )
+        self.efficiency_config[EFFICIENCY_LETHAL_BONUS] = efficiency_config.get(
+            EFFICIENCY_LETHAL_BONUS, 0.32
+        )
 
         logger.debug("cached efficiency configuration: %s", self.efficiency_config)
 
@@ -83,7 +87,7 @@ class EfficiencyService(Module):
 
     def calculate_estimated_damage(
         self, player_raid_level: int, total_card_levels: int
-    ):
+    ) -> int:
         cards_up_to_t1 = (
             self.efficiency_config[EFFICIENCY_TRESHOLD1]
             if total_card_levels >= self.efficiency_config[EFFICIENCY_TRESHOLD1]
@@ -131,6 +135,8 @@ class EfficiencyService(Module):
             )
         ) * 1000
 
+        estimated_dmg: int = round(estimated_dmg)
+
         logger.debug(
             "Calculate Estimated DMG: PRL: %s, TCL: %s, Cards < Treshold1: %s, Cards between Treshold 1&2: %s, Cards above Treshold2: %s, Estimated DMG: %s",
             player_raid_level,
@@ -142,6 +148,72 @@ class EfficiencyService(Module):
         )
 
         return estimated_dmg
+
+    def calculate_efficiency(
+        self, player_raid_level: int, total_card_levels: int, player_average_damage: int
+    ) -> float:
+        estimated_damage = self.calculate_estimated_damage(
+            player_raid_level, total_card_levels
+        )
+
+        efficiency = player_average_damage / estimated_damage
+        logger.debug(
+            "Efficiency for avg dmg %s and estimated dmg %s = %s",
+            player_average_damage,
+            estimated_damage,
+            efficiency,
+        )
+
+        return efficiency
+
+    def calculate_efficiency_with_lethal_bonus(
+        self,
+        player_raid_level: int,
+        total_card_levels: int,
+        player_average_damage: int,
+        max_attacks: int,
+        player_attacks: int,
+    ):
+        bonus = self.calcualte_lethal_bonus(max_attacks, player_attacks)
+        estimated_damage = self.calculate_estimated_damage(
+            player_raid_level, total_card_levels
+        )
+
+        efficiency = player_average_damage * bonus / estimated_damage
+
+        logger.debug(
+            "Efficiency for avg dmg %s and estimated dmg %s ( with lethal bonus %s ) = %s",
+            player_average_damage,
+            estimated_damage,
+            bonus,
+            efficiency,
+        )
+
+        return efficiency
+
+    def calcualte_lethal_bonus(self, max_attacks: int, player_attacks) -> int:
+        gets_lethal_bonus = (
+            player_attacks
+            - max_attacks
+            + (4 if max_attacks % 4 == 0 else max_attacks % 4)
+            == 4
+        )
+
+        logger.debug(
+            "Lethal bonus: Player with %s attacks ( max %s ) recieves lethal bonus ? %s",
+            player_attacks,
+            max_attacks,
+            gets_lethal_bonus,
+        )
+
+        bonus = 1 + (self.efficiency_config[EFFICIENCY_LETHAL_BONUS] / max_attacks)
+
+        logger.debug("Lethal bonus for %s attacks: %s ", max_attacks, bonus)
+
+        if not gets_lethal_bonus:
+            return 1
+
+        return bonus
 
 
 def get_efficiency_service(context: Context) -> EfficiencyService:
