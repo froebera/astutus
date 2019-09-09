@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 import logging
 from discord.ext import commands
 from ..services import (
@@ -11,6 +11,7 @@ from .util import (
     EFFICIENCY_CARD_PERC,
     EFFICIENCY_REDUCTION1,
     EFFICIENCY_REDUCTION2,
+    EFFICIENCY_LETHAL_BONUS,
 )
 
 from csv import DictReader
@@ -59,6 +60,41 @@ class EfficiencyModule(commands.Cog, Module):
         await ctx.send(
             f"The estimated average damage for raid level **{player_raid_level}** and total card levels **{total_card_levels}** is **{estimated_damage_hum}**"
         )
+
+    @commands.command(
+        name="efficiency",
+        brief="Calculates your efficiency ( including lethal bonus if supplied )",
+        description="Calculates your efficiency ( including lethal bonus if supplied )",
+    )
+    async def calculate_efficiency(
+        self,
+        ctx,
+        player_raid_level: int,
+        total_card_levels: int,
+        average_damage: int,
+        rounds: Optional[int] = 0,
+    ):
+        efficiency = self.efficiency_service.calculate_efficiency_with_lethal_bonus(
+            player_raid_level, total_card_levels, average_damage, rounds * 4, rounds * 4
+        )
+
+        await ctx.send(
+            "Efficiency for PRL **{}**, TCL **{}** and an average damage of **{}** {}: **{}%**".format(
+                player_raid_level,
+                total_card_levels,
+                average_damage,
+                "(including lethal bonus for {} rounds / {} attacks)".format(
+                    rounds, rounds * 4
+                )
+                if rounds > 0
+                else "",
+                round(efficiency * 100, 2),
+            )
+        )
+
+        # await ctx.send(
+        #     f"Efficiency for PRL **{player_raid_level}**, TCL **{total_card_levels}** and an average damage of **{average_damage}** {}: **{round(efficiency * 100, 2)}%**"
+        # )
 
     """
     Raid stat suff:
@@ -128,12 +164,15 @@ class EfficiencyModule(commands.Cog, Module):
             EFFICIENCY_CARD_PERC,
             EFFICIENCY_REDUCTION1,
             EFFICIENCY_REDUCTION2,
+            EFFICIENCY_LETHAL_BONUS,
         ]:
             converted_value = float(value)
         else:
             converted_value = int(value)
 
-        await self.efficiency_service.set_efficiency_config_value(config_key, converted_value)
+        await self.efficiency_service.set_efficiency_config_value(
+            config_key, converted_value
+        )
         await ctx.send(
             f":white_check_mark: Successfully set **{config_key}** to {converted_value}"
         )

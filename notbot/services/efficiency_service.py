@@ -173,7 +173,7 @@ class EfficiencyService(Module):
         player_average_damage: int,
         max_attacks: int,
         player_attacks: int,
-    ):
+    ) -> float:
         bonus = self.calcualte_lethal_bonus(max_attacks, player_attacks)
         estimated_damage = self.calculate_estimated_damage(
             player_raid_level, total_card_levels
@@ -206,7 +206,10 @@ class EfficiencyService(Module):
             gets_lethal_bonus,
         )
 
-        bonus = 1 + (self.efficiency_config[EFFICIENCY_LETHAL_BONUS] / max_attacks)
+        if max_attacks == 0 or player_attacks == 0:
+            bonus = 1
+        else:
+            bonus = 1 + (self.efficiency_config[EFFICIENCY_LETHAL_BONUS] / max_attacks)
 
         logger.debug("Lethal bonus for %s attacks: %s ", max_attacks, bonus)
 
