@@ -92,10 +92,6 @@ class EfficiencyModule(commands.Cog, Module):
             )
         )
 
-        # await ctx.send(
-        #     f"Efficiency for PRL **{player_raid_level}**, TCL **{total_card_levels}** and an average damage of **{average_damage}** {}: **{round(efficiency * 100, 2)}%**"
-        # )
-
     """
     Raid stat suff:
     
