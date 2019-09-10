@@ -423,7 +423,7 @@ class RaidModule(commands.Cog, Module):
     @commands.check(raidconfig_exists)
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
         try:
-            self.queue_service.queue_up(ctx.author.id, ctx.guild.id, queue)
+            await self.queue_service.queue_up(ctx.author.id, ctx.guild.id, queue)
         except UserAlreadyQueued as err:
             raise commands.BadArgument(f"Sorry **{ctx.author.name}**, you are already **#{err.queued_index + 1}** in the queue")
         except UserAttacking:
