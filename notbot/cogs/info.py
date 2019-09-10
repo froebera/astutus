@@ -54,8 +54,8 @@ class InfoModule(commands.Cog, Module):
     @commands.command(
         name="emoji",
         aliases=["e"],
-        brief="Displays a bigger version of the given emoji",
-        description="Displays a bigger version of the given emoji. Does not work with Discords default emojis",
+        brief="Displays a larger version of the given emoji",
+        description="Displays a larger version of the given emoji. Does not work with Discords default emojis",
     )
     async def emoji(self, ctx, emoji: Union[Emoji]):
         e: Emoji = emoji
