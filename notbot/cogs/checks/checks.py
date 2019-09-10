@@ -78,7 +78,9 @@ async def has_raid_timer_permissions(ctx):
 
     # return bool(next((role for role in roles if role in ctx.author.roles), None))
 
-    raise commands.BadArgument("You dont have the permission to manage timers")
+    raise commands.BadArgument(
+        "You dont have the permission to manage timers and queues"
+    )
 
 
 async def has_clan_role(ctx):
