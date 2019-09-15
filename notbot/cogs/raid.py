@@ -222,9 +222,14 @@ class RaidModule(commands.Cog, Module):
         queue_in_progress = int(queue_config.get(QUEUE_PROGRESS, 0))
         queue_name = queue_config.get(QUEUE_NAME, None)
         queue_ping_after = int(queue_config.get(QUEUE_PING_AFTER, 0))
+        queue_paused = int(queue_config.get(QUEUE_PAUSED), 0)
 
         is_active = queue_config.get(QUEUE_ACTIVE, 0)
         if not is_active:
+            return
+
+        if queue_paused:
+            logger.debug("Queue %s is paused", queue_name if queue_name else queue)
             return
 
         queued_users = await self.queue_dao.get_queued_users(guild.id, queue)
@@ -441,6 +446,7 @@ class RaidModule(commands.Cog, Module):
             return_exceptions=True
         )
 
+        queue_paused = int(queueconfig.get(QUEUE_PAUSED), 0)
         queue_size = int(queueconfig.get(QUEUE_SIZE, 1))
         current_attacker_ids = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
         clusters = zip_longest(*[iter(queued_users)] * queue_size, fillvalue=None)
@@ -466,7 +472,10 @@ class RaidModule(commands.Cog, Module):
         
         if result or current_attackers_formatted:
             embed = create_embed(ctx.bot)
-            embed.title = f"**Queue** for **{queue_name if queue_name else queue}**:" 
+            embed.title = "**Queue** for **{}**{}:".format(
+                queue_name if queue_name else queue,
+                "" if not queue_paused else " ( paused )"
+            )
 
             if current_attackers_formatted:
                 embed.add_field(name="Current attackers", value=current_attackers_formatted, inline=False)
@@ -679,6 +688,18 @@ class RaidModule(commands.Cog, Module):
 
         await self.queue_dao.set_queue_active(ctx.guild.id, queue_name)
         await ctx.send(f":white_check_mark: Started queue {queue_name}") 
+
+    @queueconfig.command(name="pause")
+    @commands.check(has_raid_timer_permissions)
+    async def queueconfig_pause(self, ctx, queue_name: typing.Optional[Queue] = "default"):
+        await self.queue_service.pause_queue(ctx.guild.id, queue_name)
+        await ctx.send(f":white_check_mark: Paused queue {queue_name}")
+
+    @queueconfig.command(name="resume")
+    @commands.check(has_raid_timer_permissions)
+    async def queueconfig_resume(self, ctx, queue_name: typing.Union[Queue] = "default"):
+        await self.queue_service.resume_queue(ctx.guild.id, queue_name)
+        await ctx.send(f":white_check_mark: Resumed queue {queue_name}") 
 
     async def check_if_queue_exists_or_break(self, guild_id, queue):
         queues = await self.queue_dao.get_all_queues(guild_id)

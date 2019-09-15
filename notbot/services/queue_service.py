@@ -44,6 +44,12 @@ class QueueService(Module):
                     "Sorry... Something went wrong. Please try to queue up again"
                 )
 
+    async def pause_queue(self, guild_id, queue_name):
+        await self.queue_dao.pause_queue(guild_id, queue_name)
+
+    async def resume_queue(self, guild_id, queue_name):
+        await self.queue_dao.resume_queue(guild_id, queue_name)
+
 
 def get_queue_service(context: Context) -> QueueService:
     return context.get_or_register_module(MODULE_NAME, lambda: QueueService(context))
