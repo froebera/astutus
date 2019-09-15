@@ -222,7 +222,7 @@ class RaidModule(commands.Cog, Module):
         queue_in_progress = int(queue_config.get(QUEUE_PROGRESS, 0))
         queue_name = queue_config.get(QUEUE_NAME, None)
         queue_ping_after = int(queue_config.get(QUEUE_PING_AFTER, 0))
-        queue_paused = int(queue_config.get(QUEUE_PAUSED), 0)
+        queue_paused = int(queue_config.get(QUEUE_PAUSED, 0))
 
         is_active = queue_config.get(QUEUE_ACTIVE, 0)
         if not is_active:
@@ -446,7 +446,7 @@ class RaidModule(commands.Cog, Module):
             return_exceptions=True
         )
 
-        queue_paused = int(queueconfig.get(QUEUE_PAUSED), 0)
+        queue_paused = int(queueconfig.get(QUEUE_PAUSED, 0))
         queue_size = int(queueconfig.get(QUEUE_SIZE, 1))
         current_attacker_ids = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
         clusters = zip_longest(*[iter(queued_users)] * queue_size, fillvalue=None)
