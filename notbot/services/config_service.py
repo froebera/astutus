@@ -9,7 +9,7 @@ MODULE_NAME = "config_service"
 
 class ConfigService(Module):
     def __init__(self, context: Context):
-        self.config: List[str] = None
+        self.config: configparser.ConfigParser
 
     def get_name(self):
         return MODULE_NAME

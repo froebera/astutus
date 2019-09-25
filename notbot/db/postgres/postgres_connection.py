@@ -4,6 +4,7 @@ import asyncpg
 from notbot.services.config_service import get_config_service
 from asyncpg.pool import Pool
 
+
 MODULE_NAME = "postgres_connection"
 
 
@@ -28,7 +29,7 @@ class PostgresConnection(Module):
         )
 
         loop = asyncio.get_event_loop()
-        pool = loop.run_until_complete(init_db(uri))
+        pool: Pool = loop.run_until_complete(init_db(uri))
 
         self.pool = pool
 
@@ -39,7 +40,7 @@ def get_postgres_connection(context: Context) -> PostgresConnection:
     )
 
 
-async def init_db(uri):
+async def init_db(uri) -> Pool:
     pool = await asyncpg.create_pool(
         dsn=uri, command_timeout=60, max_size=5, min_size=1
     )

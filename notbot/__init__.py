@@ -15,6 +15,7 @@ from .cogs.raid import RaidModule
 from .cogs.info import InfoModule
 from .cogs.admin import AdminModule
 from .cogs.efficiency import EfficiencyModule
+from .cogs.restriction import RestrictionModule
 
 
 def apply_overwrite(node: dict, key, value):
@@ -47,7 +48,6 @@ def setup_logging():
                     apply_overwrite(c, overwrite_key, value)
 
     if c:
-        print(c)
         logging.config.dictConfig(c)
     else:
         logging.basicConfig(level="INFO")
@@ -69,6 +69,7 @@ context = (
     .with_module(InfoModule)
     .with_module(AdminModule)
     .with_module(EfficiencyModule)
+    .with_module(RestrictionModule)
 )
 
 # context.start()

@@ -29,3 +29,7 @@ EFFICIENCY_REDUCTION1 = "reduction1"
 EFFICIENCY_REDUCTION2 = "reduction2"
 EFFICIENCY_CARDS_TOTAL = "cards_total"
 EFFICIENCY_LETHAL_BONUS = "lethal_bonus"
+
+CMD_RESTRICTIONS_USER = "{}:restriction:user:{}"
+CMD_RESTRICTIONS_ROLE = "{}:restriction:role:{}"
+CMD_RESTRICTIONS_CHANNEL = "{}:restriction:channel:{}"

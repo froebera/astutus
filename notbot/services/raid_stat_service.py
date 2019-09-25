@@ -52,6 +52,20 @@ class RaidStatService(Module):
                 [rps.iter() for rps in stats],
             )
 
+    async def get_uncompleted_raids(self, guild_id: int):
+        """ MISSING : where count* = 0 OR
+        SELECT r.*,
+        (
+            SELECT COUNT(*) FROM raid_player_attack WHERE raid_id = r.id
+        ) AS count_rpa,
+        (
+            SELECT COUNT(*) FROM raid_player_stats WHERE raid_id = r.id
+        ) AS count_rps
+        FROM raid r;
+        """
+
+        pass
+
 
 def get_raid_stat_service(context: Context) -> RaidStatService:
     return context.get_or_register_module(MODULE_NAME, lambda: RaidStatService(context))

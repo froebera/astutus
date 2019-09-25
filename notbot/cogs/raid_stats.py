@@ -33,6 +33,14 @@ class RaidStatsModule(commands.Cog, Module):
     async def stats_player_upload(self, ctx, completion_date: str, *, player_stats):
         pass
 
+    @stats.command(name="list")
+    async def stats_list(self, ctx):
+        '''
+        Lists last couple raids
+        Lists uncompleted raids ( no player or raid stats uploaded yet )
+        '''
+        pass
+
 
 def setup(bot):
     context: Context = bot.context

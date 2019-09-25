@@ -1,5 +1,5 @@
 from notbot.context import Module, Context
-from .redis_connection import RedisConnection, get_redis_connection
+from .redis_connection import get_redis_connection
 from notbot.cogs.util import (
     RAID_CONFIG_KEY,
     RAID_MANAGEMENT_ROLES,
