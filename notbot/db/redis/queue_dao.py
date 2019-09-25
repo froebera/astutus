@@ -10,6 +10,7 @@ from notbot.cogs.util import (
     QUEUE_CURRENT_USERS,
     QUEUE_SIZE,
     QUEUE_NAME,
+    QUEUE_PAUSED,
 )
 
 import asyncio
@@ -64,6 +65,9 @@ class QueueDao(Module):
             ),
             self.connection.hdel(
                 QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_ACTIVE
+            ),
+            self.connection.hdel(
+                QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_PAUSED
             ),
             self.delete_current_users(guild_id, queue_name),
             self.delete_queued_users(guild_id, queue_name),
@@ -123,6 +127,16 @@ class QueueDao(Module):
     async def delete_queue_configuration(self, guild_id, queue_name):
         return await self.connection.delete(
             QUEUE_CONFIG_KEY.format(guild_id, queue_name)
+        )
+
+    async def pause_queue(self, guild_id, queue_name):
+        await self.connection.hset(
+            QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_PAUSED, 1
+        )
+
+    async def resume_queue(self, guild_id, queue_name):
+        await self.connection.hset(
+            QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_PAUSED, 0
         )
 
 
