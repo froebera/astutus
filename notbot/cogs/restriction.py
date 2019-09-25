@@ -8,6 +8,7 @@ from discord.utils import get
 from notbot.context import Module, Context
 from notbot.services import get_command_restriction_service
 from .util import create_embed
+from .checks import is_mod
 
 MODULE_NAME = "restriction_module"
 
@@ -67,6 +68,7 @@ class RestrictionModule(commands.Cog, Module):
 
         await ctx.send(embed=embed)
 
+    @commands.check(is_mod)
     @restrictions.command(name="add")
     async def restrictions_add(
         self,
@@ -104,6 +106,7 @@ class RestrictionModule(commands.Cog, Module):
             )
         )
 
+    @commands.check(is_mod)
     @restrictions.command(name="remove")
     async def restrictions_remove(
         self,
@@ -138,6 +141,7 @@ class RestrictionModule(commands.Cog, Module):
             )
         )
 
+    @commands.check(is_mod)
     @restrictions.command(name="clear")
     async def restrictions_clear(self, ctx, command):
         cmd = ctx.bot.get_command(command)
