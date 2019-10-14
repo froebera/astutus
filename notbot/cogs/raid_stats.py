@@ -27,6 +27,10 @@ class RaidStatsModule(commands.Cog, Module):
     @stats_raid.command(name="upload")
     async def stats_raid_upload(self, ctx, raid_id: int, *, raid_data):
         print(raid_data)
+
+        # check if anything has been uploaded for this specific raid_id before
+        # TODO: check for guild_id ...
+
         raid_attacks: List[RaidPlayerAttack] = []
         for row in DictReader(raid_data.split("\n")):
             rpa = RaidPlayerAttack(
@@ -34,13 +38,13 @@ class RaidStatsModule(commands.Cog, Module):
             )
             raid_attacks.append(rpa)
 
-        #ForeignKeyViolationError
+        # ForeignKeyViolationError
         await self.raid_stat_service.save_raid_player_attacks(raid_attacks)
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        print("New message")
-        print(message.channel)
+    # @commands.Cog.listener()
+    # async def on_message(self, message):
+    #     print("New message")
+    #     print(message.channel)
 
     # @stats.group(name="player", invoke_without_command=True)
     # async def stats_player(self, ctx):
