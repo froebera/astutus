@@ -1,8 +1,9 @@
 import logging
+import asyncio
 from ..context import Context, Module
-from ..models import RaidPlayerAttack, RaidPlayerStat
+from ..db import get_raid_postgres_dao
+from notbot.models import Raid, RaidPlayerAttack
 from typing import List
-from ..db import get_postgres_connection
 
 MODULE_NAME = "raid_stat_service"
 logger = logging.getLogger(__name__)
@@ -10,61 +11,30 @@ logger = logging.getLogger(__name__)
 
 class RaidStatService(Module):
     def __init__(self, context: Context):
-        self.postgres_connection = get_postgres_connection(context)
+        self.raid_postgres_dao = get_raid_postgres_dao(context)
 
     def get_name(self):
         return MODULE_NAME
 
+    async def get_uncompleted_raids(self, guild_id):
+        return await self.raid_postgres_dao.get_uncompleted_raids(guild_id)
+
+    async def get_last_completed_raids(self, guild_id):
+        return await self.raid_postgres_dao.get_last_completed_raids(guild_id)
+
     async def save_raid_player_attacks(self, attacks: List[RaidPlayerAttack]):
-        async with self.postgres_connection.pool.acquire() as connection:
-            # insert_statement = connection.prepare(
-            #     """INSERT INTO raid_player_attack
-            #            (player_id, raid_id, total_dmg, total_hits)
-            #        VALUES (
-            #            $1, $2, $3, $4
-            #        )
-            #     """
-            # )
+        return await self.raid_postgres_dao.save_raid_player_attacks(attacks)
 
-            # for attack in attacks:
-            #     logger.debug(attack)
-            await connection.executemany(
-                """
-                INSERT INTO raid_player_attack 
-                    (raid_id, player_id, player_name, total_hits, total_dmg)
-                VALUES (
-                    $1, $2, $3, $4, $5
-                ) 
-                """,
-                [rpa.iter() for rpa in attacks],
-            )
-
-    async def save_raid_player_stats(self, stats: List[RaidPlayerStat]):
-        async with self.postgres_connection.pool.acquire() as connection:
-            await connection.executemany(
-                """
-                INSERT INTO raid_player_stats
-                    (raid_id, player_id, total_card_levels, raid_level)
-                VALUES (
-                    $1, $2, $3, $4
-                )
-                """,
-                [rps.iter() for rps in stats],
-            )
-
-    async def get_uncompleted_raids(self, guild_id: int):
-        """ MISSING : where count* = 0 OR
-        SELECT r.*,
-        (
-            SELECT COUNT(*) FROM raid_player_attack WHERE raid_id = r.id
-        ) AS count_rpa,
-        (
-            SELECT COUNT(*) FROM raid_player_stats WHERE raid_id = r.id
-        ) AS count_rps
-        FROM raid r;
+    async def get_raid_list(self, guild_id):
+        """
+            returns the last 10 completed last 10 uncompleted raids
         """
 
-        pass
+        return await asyncio.gather(
+            self.get_uncompleted_raids(guild_id),
+            self.get_last_completed_raids(guild_id),
+            return_exceptions=True,
+        )
 
 
 def get_raid_stat_service(context: Context) -> RaidStatService:

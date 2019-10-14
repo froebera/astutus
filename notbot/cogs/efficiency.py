@@ -1,11 +1,7 @@
 from typing import Union, Optional
 import logging
 from discord.ext import commands
-from ..services import (
-    get_efficiency_service,
-    get_raid_stat_service,
-    EFFICIENCY_CONFIG_KEYS,
-)
+from ..services import get_efficiency_service, EFFICIENCY_CONFIG_KEYS
 from .util import (
     num_to_hum,
     EFFICIENCY_CARD_PERC,
@@ -39,7 +35,6 @@ class EfficiencyModule(commands.Cog, Module):
     def __init__(self, context: Context):
         self.bot = context.get_bot()
         self.efficiency_service = get_efficiency_service(context)
-        self.raid_stat_service = get_raid_stat_service(context)
 
     def get_name(self):
         return MODULE_NAME

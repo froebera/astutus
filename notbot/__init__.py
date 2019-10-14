@@ -16,6 +16,7 @@ from .cogs.info import InfoModule
 from .cogs.admin import AdminModule
 from .cogs.efficiency import EfficiencyModule
 from .cogs.restriction import RestrictionModule
+from .cogs.raid_stats import RaidStatsModule
 
 
 def apply_overwrite(node: dict, key, value):
@@ -70,6 +71,7 @@ context = (
     .with_module(AdminModule)
     .with_module(EfficiencyModule)
     .with_module(RestrictionModule)
+    .with_module(RaidStatsModule)
 )
 
 # context.start()
