@@ -71,6 +71,8 @@ class NOTBOT(commands.AutoShardedBot):
 
     async def on_ready(self):
         logger.info("Ready: %s (ID: %s)", self.user, self.user.id)
+        activity = discord.Activity(name='everyone fail commands', type=discord.ActivityType.watching)
+        await self.change_presence(activity=activity)
 
     async def on_message(self, message: discord.Message):
         """

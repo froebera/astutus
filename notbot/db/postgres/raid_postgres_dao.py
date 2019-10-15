@@ -99,37 +99,6 @@ class RaidPostgresDao(PostgresDaoBase, Module):
 
                 return result
 
-    async def save_raid_player_attacks(self, attacks: List[RaidPlayerAttack]):
-        async with self.connection() as connection:
-            await connection.executemany(
-                """
-                INSERT INTO raid_player_attack
-                    (raid_id, player_id, player_name, total_hits, total_dmg)
-                VALUES (
-                    $1, $2, $3, $4, $5
-                ) 
-                """,
-                [rpa.iter() for rpa in attacks],
-            )
-
-    async def check_if_attacks_exist(self, guild_id, raid_id):
-        async with self.connection() as connection:
-            res = await connection.fetchval(
-                """
-                SELECT 1
-                FROM raid r
-                JOIN raid_player_attack rpa
-                    on rpa.raid_id = r.id
-                WHERE
-                r.guild_id = $1
-                AND r.id = $2
-                GROUP BY 1
-                """,
-                str(guild_id),
-                raid_id,
-            )
-            return res == True
-
     async def has_raid_permission_and_raid_exists(self, guild_id, raid_id):
         async with self.connection() as connection:
             res = await connection.fetchval(

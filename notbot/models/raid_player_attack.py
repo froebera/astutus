@@ -21,3 +21,12 @@ class RaidPlayerAttack:
             self.total_hits,
             self.total_dmg,
         )
+
+    def __repr__(self):
+        return "RaidPlayerAttack([{}, {}, {}, {}, {}])".format(
+            self.raid_id,
+            self.player_id,
+            self.player_name,
+            self.total_hits,
+            self.total_dmg,
+        )
