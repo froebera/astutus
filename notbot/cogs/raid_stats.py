@@ -7,6 +7,7 @@ from typing import List
 from notbot.models import RaidPlayerAttack
 import notbot.cogs.util.formatter as formatter
 from logging import getLogger
+from .checks import has_raid_management_permissions
 
 MODULE_NAME = "stats_module"
 
@@ -30,6 +31,7 @@ class RaidStatsModule(commands.Cog, Module):
         pass
 
     @stats_raid.command(name="upload")
+    @commands.check(has_raid_management_permissions)
     async def stats_raid_upload(self, ctx, raid_id: int, *, raid_data):
         has_permission_and_exists, attacks_exist = await asyncio.gather(
             self.raid_stat_service.has_raid_permission_and_raid_exists(
