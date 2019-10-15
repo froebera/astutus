@@ -19,6 +19,7 @@ extensions = [
     "cogs.efficiency",
     "cogs.restriction",
     "cogs.raid_stats",
+    "cogs.personal_commands",
 ]
 
 logger = logging.getLogger(__name__)
