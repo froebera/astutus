@@ -17,3 +17,7 @@ def num_to_hum(num):
     logger.debug("Formatted %s to %s", num, human_friendly_num)
 
     return human_friendly_num
+
+
+def success_message(message: str):
+    return ":white_check_mark: {}".format(message)

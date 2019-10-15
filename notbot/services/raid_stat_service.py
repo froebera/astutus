@@ -25,6 +25,14 @@ class RaidStatService(Module):
     async def save_raid_player_attacks(self, attacks: List[RaidPlayerAttack]):
         return await self.raid_postgres_dao.save_raid_player_attacks(attacks)
 
+    async def check_if_attacks_exist(self, guild_id, raid_id):
+        return await self.raid_postgres_dao.check_if_attacks_exist(guild_id, raid_id)
+
+    async def has_raid_permission_and_raid_exists(self, guild_id, raid_id):
+        return await self.raid_postgres_dao.has_raid_permission_and_raid_exists(
+            guild_id, raid_id
+        )
+
     async def get_raid_list(self, guild_id):
         """
             returns the last 10 completed last 10 uncompleted raids

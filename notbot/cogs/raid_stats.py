@@ -1,11 +1,16 @@
+import asyncio
 from discord.ext import commands
 from csv import DictReader
 from ..context import Context, Module
 from notbot.services import get_raid_stat_service
 from typing import List
 from notbot.models import RaidPlayerAttack
+import notbot.cogs.util.formatter as formatter
+from logging import getLogger
 
 MODULE_NAME = "stats_module"
+
+logger = getLogger(__name__)
 
 
 class RaidStatsModule(commands.Cog, Module):
@@ -26,10 +31,27 @@ class RaidStatsModule(commands.Cog, Module):
 
     @stats_raid.command(name="upload")
     async def stats_raid_upload(self, ctx, raid_id: int, *, raid_data):
-        print(raid_data)
+        has_permission_and_exists, attacks_exist = await asyncio.gather(
+            self.raid_stat_service.has_raid_permission_and_raid_exists(
+                ctx.guild.id, raid_id
+            ),
+            self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid_id),
+        )
 
-        # check if anything has been uploaded for this specific raid_id before
-        # TODO: check for guild_id ...
+        logger.debug("stats_raid_upload: Uploading raid data for raid_id %s", raid_id)
+        logger.debug(
+            "stats_raid_upload: Has permission and raid exists: %s, Stats already uploaded for this raid: %s",
+            has_permission_and_exists,
+            attacks_exist,
+        )
+
+        if not has_permission_and_exists:
+            raise commands.BadArgument("Raid does not exist for your guild")
+
+        if attacks_exist:
+            raise commands.BadArgument(
+                "Attacks have already been uploaded for this raid. Delete them if you want to reupload"
+            )
 
         raid_attacks: List[RaidPlayerAttack] = []
         for row in DictReader(raid_data.split("\n")):
@@ -38,8 +60,8 @@ class RaidStatsModule(commands.Cog, Module):
             )
             raid_attacks.append(rpa)
 
-        # ForeignKeyViolationError
         await self.raid_stat_service.save_raid_player_attacks(raid_attacks)
+        await ctx.send(formatter.success_message("Saved raid conclusion"))
 
     # @commands.Cog.listener()
     # async def on_message(self, message):
