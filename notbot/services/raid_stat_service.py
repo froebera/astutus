@@ -95,6 +95,7 @@ class RaidStatService(Module):
             min_hits,
             max_hits,
             total_dmg,
+            len(attacks),
         )
 
         return raid_stats

@@ -8,6 +8,8 @@ from notbot.models import RaidPlayerAttack
 import notbot.cogs.util.formatter as formatter
 from logging import getLogger
 from .checks import has_raid_management_permissions
+from .util import create_embed, num_to_hum
+import math
 
 MODULE_NAME = "stats_module"
 
@@ -23,8 +25,55 @@ class RaidStatsModule(commands.Cog, Module):
         return MODULE_NAME
 
     @commands.group(name="stats", invoke_without_command=True)
-    async def stats(self, ctx):
-        pass
+    async def stats(self, ctx, raid_id: int):
+        has_permission_and_exists = await self.raid_stat_service.has_raid_permission_and_raid_exists(
+            ctx.guild.id, raid_id
+        )
+
+        if not has_permission_and_exists:
+            raise commands.BadArgument("Raid does not exist for your guild")
+
+        raid_stats = await self.raid_stat_service.calculate_raid_stats(raid_id)
+
+        embed = create_embed(self.bot)
+
+        embed.add_field(
+            name="**Average Player Damage**",
+            value="\n".join(
+                self._create_min_max_avg_texts(
+                    raid_stats.min_avg, raid_stats.max_avg, raid_stats.total_avg
+                )
+            ),
+        )
+
+        embed.add_field(
+            name="**Player Damage**",
+            value="\n".join(
+                self._create_min_max_avg_texts(
+                    raid_stats.min_dmg, raid_stats.max_dmg, raid_stats.avg_dmg
+                )
+            ),
+        )
+
+        embed.add_field(
+            name="**Attacks**",
+            value="\n".join(
+                self._create_min_max_avg_texts(raid_stats.min_hits, raid_stats.max_hits)
+            ),
+        )
+
+        embed.add_field(
+            name="**Total Damage Dealt**",
+            value="{}".format(num_to_hum(raid_stats.total_dmg)),
+        )
+
+        embed.add_field(
+            name="**Cycles**", value="{}".format(math.ceil(raid_stats.max_hits / 4))
+        )
+
+        embed.add_field(name="**Attackers**", value="{}".format(raid_stats.attackers))
+
+        await ctx.send(embed=embed)
 
     @stats.group(name="raid", invoke_without_command=True)
     async def stats_raid(self, ctx):
@@ -120,6 +169,16 @@ class RaidStatsModule(commands.Cog, Module):
         )
 
         await ctx.send(msg)
+
+    def _create_min_max_avg_texts(self, min_val, max_val, avg_val=None):
+        res = [
+            ":arrow_double_up:: {}".format(num_to_hum(max_val)),
+            ":arrow_double_down:: {}".format(num_to_hum(min_val)),
+        ]
+
+        if avg_val:
+            res.append(":heavy_minus_sign:: {}".format(num_to_hum(avg_val)))
+        return res
 
 
 def setup(bot):
