@@ -20,6 +20,7 @@ RAID_MANAGEMENT_ROLES = "management_roles"
 RAID_CLAN_ROLES = "clan_roles"
 RAID_TIMER_ROLES = "timer_roles"
 RAID_REMINDED = "reminded"
+RAID_UNSET_REMINDER = "unset_reminder"
 
 EFFICIENCY_KEY = "efficiency"
 EFFICIENCY_BASE = "base"

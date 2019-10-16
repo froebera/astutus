@@ -12,6 +12,7 @@ from notbot.cogs.util import (
     RAID_COOLDOWN,
     RAID_CLAN_ROLES,
     RAID_ANNOUNCEMENTCHANNEL,
+    RAID_UNSET_REMINDER
 )
 from .redis import Redis
 
@@ -66,6 +67,11 @@ class RaidDao(Module):
     async def set_cooldown_reminded(self, guild_id):
         return await self.redis_connection.hset(
             RAID_CONFIG_KEY.format(guild_id), RAID_REMINDED, 1
+        )
+
+    async def set_unset_reminder(self, guild_id, reminder_timestamp):
+        return await self.redis_connection.hset(
+            RAID_CONFIG_KEY.format(guild_id), RAID_UNSET_REMINDER, reminder_timestamp
         )
 
     async def set_raid_reset(self, guild_id, reset):
