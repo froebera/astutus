@@ -3,7 +3,9 @@ import contextvars
 from contextvars import ContextVar
 import traceback
 import discord
+from itertools import cycle
 from discord.ext import commands
+from discord.ext import tasks
 from discord.utils import get
 from .services import get_config_service, get_command_restriction_service
 from .context import Context
@@ -26,6 +28,14 @@ logger = logging.getLogger(__name__)
 
 command_execution_start: ContextVar[arrow.Arrow] = ContextVar("command_execution_start")
 
+ACTIVITY_CYCLE = cycle(
+    [
+        discord.Activity(name='with timers', type=discord.ActivityType.playing),
+        discord.Activity(name='with queues', type=discord.ActivityType.playing),
+        discord.Activity(name='everyone fail commands', type=discord.ActivityType.watching),
+        discord.Activity(name='NOTME breaking stuff', type=discord.ActivityType.watching),
+    ]
+)
 
 async def prefix_callable(bot, message) -> list:
     user_id = bot.user.id
@@ -69,11 +79,20 @@ class NOTBOT(commands.AutoShardedBot):
                 self.load_extension(e)
             except (discord.ClientException):
                 logger.error("Failed to load cog %s", e)
+        self.cycle_presence.start()
+
+    @tasks.loop(minutes=5)
+    async def cycle_presence(self):
+        activity = next(ACTIVITY_CYCLE)
+        await self.change_presence(activity=activity)
+
+    @cycle_presence.before_loop
+    async def wait_for_bot(self):
+        logger.debug("Waiting for the bot to be ready before starting the cycle_presence task")
+        await self.wait_until_ready()
 
     async def on_ready(self):
         logger.info("Ready: %s (ID: %s)", self.user, self.user.id)
-        activity = discord.Activity(name='everyone fail commands', type=discord.ActivityType.watching)
-        await self.change_presence(activity=activity)
 
     async def on_message(self, message: discord.Message):
         """

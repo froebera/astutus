@@ -93,6 +93,11 @@ class RaidModule(commands.Cog, Module):
             return_exceptions=True,
         )
 
+    @raid_timer.before_loop
+    async def wait_for_bot(self):
+        logger.debug("waiting for the bot to be ready")
+        await self.bot.wait_until_ready()
+
     async def handle_timer_for_guild(self, guild, now):
         await asyncio.gather(
             self.handle_raid_timer_for_guild(guild, now),
@@ -312,11 +317,6 @@ class RaidModule(commands.Cog, Module):
                     ", ".join([f"{m.mention}" for m in queued_members])
                 )
             )
-
-    @raid_timer.before_loop
-    async def wait_for_bot(self):
-        logger.debug("waiting for the bot to be ready")
-        await self.bot.wait_until_ready()
 
     @commands.group(name="raid", aliases=["r"], invoke_without_command=True)
     async def raid(self, ctx):
