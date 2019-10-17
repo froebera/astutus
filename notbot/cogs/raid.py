@@ -121,6 +121,7 @@ class RaidModule(commands.Cog, Module):
         messageid = current_raid_config.get(RAID_COUNTDOWNMESSAGE, None)
         reminded = int(current_raid_config.get(RAID_REMINDED, 0))
         permitted_roles = current_raid_config.get(RAID_MANAGEMENT_ROLES, "")
+        unset_reminder = int(current_raid_config.get(RAID_UNSET_REMINDER, None))
 
         if announcement_channel is None:
             raise asyncio.CancelledError
@@ -144,6 +145,7 @@ class RaidModule(commands.Cog, Module):
             countdown_message = await announcement_channel.send("Respawning timer ...")
             await self.raid_dao.set_countdown_message(guild.id, countdown_message.id)
 
+
         if cooldown is not None:
             cdn = arrow.get(cooldown)
             if now > cdn:
@@ -160,6 +162,9 @@ class RaidModule(commands.Cog, Module):
                         for member in role.members:
                             if member.mention not in to_ping:
                                 to_ping.append(member.mention)
+
+                    unset_reminder = now.shift(hours=3)
+                    await self.raid_dao.set_unset_reminder(guild.id, unset_reminder.timestamp)
 
                     await self.raid_dao.set_cooldown_reminded(guild.id)
                     await announcement_channel.send("Set the raid timer!\n{}".format(', '.join(to_ping)))
@@ -207,6 +212,20 @@ class RaidModule(commands.Cog, Module):
                 await countdown_message.edit(
                     content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
                 )
+        elif unset_reminder:
+            _unset_reminder = arrow.get(unset_reminder)
+            if now > _unset_reminder:
+                logger.debug("Reminding to set the raid timer")
+                roles = (guild.get_role(int(roleid)) for roleid in permitted_roles.split())
+
+                to_ping = []
+                for role in roles:
+                    for member in role.members:
+                        if member.mention not in to_ping:
+                            to_ping.append(member.mention)
+
+                await self.raid_dao.del_key(guild.id, RAID_UNSET_REMINDER)
+                await announcement_channel.send("Start raiding lazy folks.\nOr did you forget to set the timer again? :rolling_eyes:\n{}".format(', '.join(to_ping)))
 
     async def handle_queues_for_guild(self, guild):
         queues = await self.queue_dao.get_all_queues(guild.id)
