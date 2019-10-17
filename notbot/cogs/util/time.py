@@ -47,3 +47,11 @@ def get_hms(delta: timedelta):
     hours, remainder = divmod(total_seconds, 60 * 60)
     minutes, seconds = divmod(remainder, 60)
     return hours, minutes, seconds
+
+
+def get_dhms(delta: timedelta):
+    days = delta.days
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return days, hours, minutes, seconds
+

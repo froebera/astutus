@@ -1,15 +1,17 @@
 import asyncio
 from discord.ext import commands
+from typing import List, Union
 from csv import DictReader
+from logging import getLogger
+import math
+
 from ..context import Context, Module
-from notbot.services import get_raid_stat_service
-from typing import List
+from notbot.services import get_raid_stat_service, get_raid_service
 from notbot.models import RaidPlayerAttack
 import notbot.cogs.util.formatter as formatter
-from logging import getLogger
 from .checks import has_raid_management_permissions
-from .util import create_embed, num_to_hum
-import math
+from .util import create_embed, num_to_hum, DATETIME_FORMAT, get_hms
+from .converter import ArrowDateTimeConverter
 
 MODULE_NAME = "stats_module"
 
@@ -20,20 +22,32 @@ class RaidStatsModule(commands.Cog, Module):
     def __init__(self, context: Context):
         self.bot = context.get_bot()
         self.raid_stat_service = get_raid_stat_service(context)
+        # self.raid_service = get_raid_service(context)
 
     def get_name(self):
         return MODULE_NAME
 
     @commands.group(name="stats", invoke_without_command=True)
     async def stats(self, ctx, raid_id: int):
-        has_permission_and_exists = await self.raid_stat_service.has_raid_permission_and_raid_exists(
-            ctx.guild.id, raid_id
+        # TODO: check if raid is complete
+        has_permission_and_exists, attacks_exist = await asyncio.gather(
+            self.raid_stat_service.has_raid_permission_and_raid_exists(
+                ctx.guild.id, raid_id
+            ),
+            self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid_id),
         )
 
         if not has_permission_and_exists:
             raise commands.BadArgument("Raid does not exist for your guild")
 
+        if not attacks_exist:
+            raise commands.BadArgument("Please upload player attacks")
+
         raid_stats = await self.raid_stat_service.calculate_raid_stats(raid_id)
+
+        # gets the days, hours, minutes and seconds of the difference
+        duration_hms = get_hms(raid_stats.cleared_at - raid_stats.started_at)
+        d_h, d_m, d_s = duration_hms[0], duration_hms[1], duration_hms[2]
 
         embed = create_embed(self.bot)
 
@@ -72,6 +86,16 @@ class RaidStatsModule(commands.Cog, Module):
         )
 
         embed.add_field(name="**Attackers**", value="{}".format(raid_stats.attackers))
+
+        embed.add_field(
+            name="**Started**", value=raid_stats.started_at.format(DATETIME_FORMAT)
+        )
+
+        embed.add_field(
+            name="**Cleared**", value=raid_stats.cleared_at.format(DATETIME_FORMAT)
+        )
+
+        embed.add_field(name="**Duration**", value=f"**{d_h}**h **{d_m}**m **{d_s}**s")
 
         await ctx.send(embed=embed)
 
@@ -114,20 +138,53 @@ class RaidStatsModule(commands.Cog, Module):
         await self.raid_stat_service.save_raid_player_attacks(raid_attacks)
         await ctx.send(formatter.success_message("Saved raid conclusion"))
 
-    # @commands.Cog.listener()
-    # async def on_message(self, message):
-    #     print("New message")
-    #     print(message.channel)
+    @stats_raid.command(name="create")
+    @commands.check(has_raid_management_permissions)
+    async def stats_raid_create(
+        self,
+        ctx,
+        started_at: ArrowDateTimeConverter,
+        cleared_at: ArrowDateTimeConverter,
+    ):
+        raid_id = await self.raid_stat_service.create_raid_stat_entry(
+            ctx.guild.id, started_at, cleared_at
+        )
 
-    # @stats.group(name="player", invoke_without_command=True)
-    # async def stats_player(self, ctx):
-    #     pass
+        await ctx.send(
+            formatter.success_message(f"Created new raid entry with id {raid_id}")
+        )
 
-    # @stats_player.command(name="upload")
-    # async def stats_player_upload(self, ctx, completion_date: str, *, player_stats):
-    #     pass
+    @stats_raid.command(name="delete")
+    @commands.check(has_raid_management_permissions)
+    async def stats_raid_delete(self, ctx, raid_id: int):
+        has_permissions_and_exists = await self.raid_stat_service.has_raid_permission_and_raid_exists(
+            ctx.guild.id, raid_id
+        )
 
-    # @stats.command(name="upload")
+        if not has_permissions_and_exists:
+            raise commands.BadArgument("Raid does not exist for your guild")
+
+        await self.raid_stat_service.delete_raid_entry(raid_id)
+
+        await ctx.send(
+            formatter.success_message(f"Deleted raid entry with id {raid_id}")
+        )
+
+    @stats_raid.command(name="delete_attacks")
+    @commands.check(has_raid_management_permissions)
+    async def stats_raid_delete_attacks(self, ctx, raid_id):
+        has_permissions_and_exists = await self.raid_stat_service.has_raid_permission_and_raid_exists(
+            ctx.guild.id, raid_id
+        )
+
+        if not has_permissions_and_exists:
+            raise commands.BadArgument("Raid does not exist for your guild")
+
+        await self.raid_stat_service.delete_attacks_for_raid(raid_id)
+
+        await ctx.send(
+            formatter.success_message(f"Deleted raid attacks for raid {raid_id}")
+        )
 
     @stats.command(name="list")
     async def stats_list(self, ctx):
@@ -140,29 +197,55 @@ class RaidStatsModule(commands.Cog, Module):
             ctx.guild.id
         )
 
+        uncompleted_raids_with_attack_check = []
+        completed_raids_with_attack_check = []
+
+        aw_attacks_exist_uncompleted = asyncio.gather(
+            self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid.id)
+            for raid in uncompleted_raids
+        )
+        aw_attacks_exist_completed = asyncio.gather(
+            self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid.id)
+            for raid in completed_raids
+        )
+
+        attacks_exist_uncompleted = await aw_attacks_exist_uncompleted
+        for idx, raid in enumerate(uncompleted_raids):
+            attack_exists = attacks_exist_uncompleted[idx]
+            uncompleted_raids_with_attack_check.append((attack_exists, raid))
+
+        attacks_exist_completed = await aw_attacks_exist_completed
+        for idx, raid in enumerate(completed_raids):
+            attack_exists = attacks_exist_completed[idx]
+            completed_raids_with_attack_check.append((attack_exists, raid))
+
         msg = "\n\n".join(
             [
                 "{}\n{}".format(
-                    "**{}**\n(Raid ID, started_at, cleared_at)".format(raid_list[0]),
+                    "**{}**\n(Raid ID, started_at, cleared_at, attacks uploaded)".format(
+                        raid_list[0]
+                    ),
                     "\n".join(
                         [
-                            "**{}**, {}, {}".format(
-                                r.id,
-                                r.started_at.format("YYYY-MM-DD HH:mm:ss")
-                                if r.started_at
+                            "**{}**, {}, {}, {}".format(
+                                r[1].id,
+                                r[1].started_at.format(DATETIME_FORMAT)
+                                if r[1].started_at
                                 else "-",
-                                r.cleared_at.format("YYYY-MM-DD HH:mm:ss")
-                                if r.cleared_at
+                                r[1].cleared_at.format(DATETIME_FORMAT)
+                                if r[1].cleared_at
                                 else "-",
+                                "Y" if r[0] else "N",
                             )
+                            # r = tuple from int ( attacks uploaded ) and the raid model
                             for r in raid_list[1]
                         ]
                     ),
                 )
                 for idx, raid_list in enumerate(
                     [
-                        ("Uncompleted raids", uncompleted_raids),
-                        ("Completed raids", completed_raids),
+                        ("Uncompleted raids", uncompleted_raids_with_attack_check),
+                        ("Completed raids", completed_raids_with_attack_check),
                     ]
                 )
             ]

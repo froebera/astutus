@@ -11,6 +11,8 @@ class RaidStats:
         max_hits,
         total_dmg,
         attackers,
+        started_at,
+        cleared_at,
     ):
         self.min_dmg = min_dmg
         self.max_dmg = max_dmg
@@ -22,9 +24,13 @@ class RaidStats:
         self.max_hits = max_hits
         self.total_dmg = total_dmg
         self.attackers = attackers
+        self.started_at = started_at
+        self.cleared_at = cleared_at
 
     def __str__(self):
-        return "RaidStats(min_dmg: {}, max_dmg: {}, avg_dmg: {}, min_avg: {}, max_avg: {}, total_avg: {}, min_hits: {}, max_hits: {}, total_dmg: {}, attackers: {})".format(
+        return "RaidStats(started_at: {}, cleared_at: {}, min_dmg: {}, max_dmg: {}, avg_dmg: {}, min_avg: {}, max_avg: {}, total_avg: {}, min_hits: {}, max_hits: {}, total_dmg: {}, attackers: {})".format(
+            self.started_at,
+            self.cleared_at,
             self.min_dmg,
             self.max_dmg,
             self.avg_dmg,

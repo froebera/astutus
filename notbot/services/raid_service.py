@@ -10,6 +10,7 @@ from ..db import (
     get_redis_connection,
 )
 from .queue_service import QueueService, get_queue_service
+from .raid_stat_service import get_raid_stat_service
 from ..exceptions import (
     RaidOnCooldown,
     RaidActive,
@@ -39,6 +40,7 @@ class RaidService(Module):
         self.raid_postgres_dao = get_raid_postgres_dao(context)
         self.postgres_connection = get_postgres_connection(context)
         self.redis_connection = get_redis_connection(context)
+        self.raid_stat_service = get_raid_stat_service(context)
 
     def get_name(self):
         return MODULE_NAME
@@ -62,7 +64,7 @@ class RaidService(Module):
         if spawn:
             raise RaidActive()
 
-        await self.raid_postgres_dao.create_raid_stat_entry(guild_id, raid_start)
+        await self.raid_stat_service.create_start_raid_stat_entry(guild_id, raid_start)
         await self._clear_current_raid_data(guild_id)
         await self.raid_dao.set_raid_spawn(guild_id, raid_start.timestamp)
 

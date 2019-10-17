@@ -57,6 +57,15 @@ class RaidStatsDao(PostgresDaoBase, Module):
 
         return result
 
+    async def delete_attacks_for_raid(self, raid_id):
+        async with self.connection() as connection:
+            res = await connection.execute("""
+                DELETE FROM raid_player_attack
+                WHERE
+                    raid_id = $1
+            """, raid_id)
+            print(res)
+
     def _map_row_to_rpa_model(self, row) -> RaidPlayerAttack:
         return RaidPlayerAttack(
             row["raid_id"],

@@ -1,9 +1,12 @@
 import logging
 import asyncio
+import arrow
+from typing import List
+
+
 from ..context import Context, Module
 from ..db import get_raid_postgres_dao, get_raid_stats_dao
 from notbot.models import Raid, RaidPlayerAttack, RaidStats
-from typing import List
 
 MODULE_NAME = "raid_stat_service"
 logger = logging.getLogger(__name__)
@@ -16,6 +19,9 @@ class RaidStatService(Module):
 
     def get_name(self):
         return MODULE_NAME
+
+    async def get_raid_for_id(self, raid_id):
+        return await self.raid_postgres_dao.get_raid_for_id(raid_id)
 
     async def get_uncompleted_raids(self, guild_id):
         return await self.raid_postgres_dao.get_uncompleted_raids(guild_id)
@@ -42,14 +48,26 @@ class RaidStatService(Module):
         return await asyncio.gather(
             self.get_uncompleted_raids(guild_id),
             self.get_last_completed_raids(guild_id),
-            return_exceptions=True,
         )
 
     async def get_raid_player_attacks_for_raid_id(self, raid_id):
         return await self.raid_stats_dao.get_raid_player_attacks_for_raid_id(raid_id)
 
+    async def create_start_raid_stat_entry(self, guild_id, raid_start: arrow.Arrow):
+        return await self.raid_postgres_dao.create_start_raid_stat_entry(
+            guild_id, raid_start
+        )
+
+    async def create_raid_stat_entry(
+        self, guild_id, started_at: arrow.Arrow, cleared_at: arrow.Arrow
+    ):
+        return await self.raid_postgres_dao.create_raid_stat_entry(
+            guild_id, started_at, cleared_at
+        )
+
     async def calculate_raid_stats(self, raid_id):
         attacks = await self.get_raid_player_attacks_for_raid_id(raid_id)
+        raid = await self.get_raid_for_id(raid_id)
 
         min_dmg, max_dmg, min_avg, max_avg, min_hits, max_hits, total_dmg, total_avg = (
             -1,
@@ -96,9 +114,18 @@ class RaidStatService(Module):
             max_hits,
             total_dmg,
             len(attacks),
+            raid.started_at,
+            raid.cleared_at,
         )
 
         return raid_stats
+
+    async def delete_raid_entry(self, raid_id):
+        await self.delete_attacks_for_raid(raid_id)
+        await self.raid_postgres_dao.delete_raid_entry(raid_id)
+
+    async def delete_attacks_for_raid(self, raid_id):
+        await self.raid_stats_dao.delete_attacks_for_raid(raid_id)
 
 
 def get_raid_stat_service(context: Context) -> RaidStatService:

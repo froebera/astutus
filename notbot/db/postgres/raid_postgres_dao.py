@@ -17,9 +17,9 @@ class RaidPostgresDao(PostgresDaoBase, Module):
     async def get_last_cleared_raid(self, guild_id):
         pass
 
-    async def create_raid_stat_entry(self, guild_id, started_at: arrow.Arrow):
+    async def create_start_raid_stat_entry(self, guild_id, started_at: arrow.Arrow):
         async with self.connection() as connection:
-            val = await connection.fetchval(
+            val: int = await connection.fetchval(
                 """INSERT INTO raid(
                 guild_id, started_at
             ) VALUES ($1, $2)
@@ -29,6 +29,24 @@ class RaidPostgresDao(PostgresDaoBase, Module):
                 started_at.datetime,
             )
             logger.debug("Created new raid stat entry with id %s", val)
+            return val
+
+    async def create_raid_stat_entry(
+        self, guild_id, started_at: arrow.Arrow, cleared_at: arrow.Arrow
+    ):
+        async with self.connection() as connection:
+            val: int = await connection.fetchval(
+                """INSERT INTO raid(
+                guild_id, started_at, cleared_at
+            ) VALUES ($1, $2, $3)
+            RETURNING id;
+            """,
+                str(guild_id),
+                started_at.datetime,
+                cleared_at.datetime,
+            )
+            logger.debug("Created new raid stat entry with id %s", val)
+            return val
 
     async def complete_last_raid_stat_entry(self, guild_id, cleared_at: arrow.Arrow):
         async with self.connection() as connection:
@@ -64,10 +82,12 @@ class RaidPostgresDao(PostgresDaoBase, Module):
                     SELECT r.*
                     FROM raid r
                     WHERE
-                    r.guild_id = $1
-                    AND NOT EXISTS (
-                        SELECT DISTINCT raid_id FROM raid_player_attack WHERE raid_id = r.id
-                    )
+                        r.guild_id = $1
+                        AND NOT EXISTS (
+                            SELECT DISTINCT raid_id FROM raid_player_attack WHERE raid_id = r.id
+                        )
+                        OR r.cleared_at IS NULL
+                        OR r.started_at IS NULL
                     ORDER BY r.cleared_at DESC
                     LIMIT 10;
                     """,
@@ -113,6 +133,33 @@ class RaidPostgresDao(PostgresDaoBase, Module):
                 raid_id,
             )
             return res == True
+
+    async def get_raid_for_id(self, raid_id):
+        async with self.connection() as connection:
+            res = await connection.fetchrow(
+                """
+                SELECT *
+                FROM raid
+                WHERE
+                    id = $1            
+            """,
+                raid_id,
+            )
+
+            return self._map_row_to_raid_model(res)
+
+    async def delete_raid_entry(self, raid_id):
+        async with self.connection() as connection:
+            res = await connection.execute(
+                """
+                    DELETE
+                    FROM raid
+                    WHERE
+                        id = $1
+                """,
+                raid_id,
+            )
+            print(res)
 
     def _map_row_to_raid_model(self, row) -> Raid:
         return Raid(
