@@ -121,7 +121,9 @@ class RaidModule(commands.Cog, Module):
         messageid = current_raid_config.get(RAID_COUNTDOWNMESSAGE, None)
         reminded = int(current_raid_config.get(RAID_REMINDED, 0))
         permitted_roles = current_raid_config.get(RAID_MANAGEMENT_ROLES, "")
-        unset_reminder = int(current_raid_config.get(RAID_UNSET_REMINDER, None))
+        unset_reminder = current_raid_config.get(RAID_UNSET_REMINDER, None)
+
+        logger.debug("handle raid timer, guild: %s, spawn: %s, cd: %s, unset_reminder: %s", guild ,spawn, cooldown, unset_reminder)
 
         if announcement_channel is None:
             raise asyncio.CancelledError
@@ -147,6 +149,7 @@ class RaidModule(commands.Cog, Module):
 
 
         if cooldown is not None:
+            logger.debug("%s - Updating remainding cooldown", guild)
             cdn = arrow.get(cooldown)
             if now > cdn:
                 arr = now - cdn
@@ -178,6 +181,7 @@ class RaidModule(commands.Cog, Module):
                 )
 
         elif spawn is not None:
+            logger.debug("%s - Updating timer", guild)
             next_spawn = arrow.get(spawn).shift(hours=12 * reset)
             hms = get_hms(next_spawn - now)
             text = "raid_content"
@@ -212,7 +216,8 @@ class RaidModule(commands.Cog, Module):
                 await countdown_message.edit(
                     content=TIMER_TEXT.format(text, hms[0], hms[1], hms[2])
                 )
-        elif unset_reminder:
+        elif unset_reminder is not None:
+            logger.debug("%s - Handling unset reminder", guild)
             _unset_reminder = arrow.get(unset_reminder)
             if now > _unset_reminder:
                 logger.debug("Reminding to set the raid timer")
