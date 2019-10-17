@@ -201,12 +201,17 @@ class RaidStatsModule(commands.Cog, Module):
         completed_raids_with_attack_check = []
 
         aw_attacks_exist_uncompleted = asyncio.gather(
-            self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid.id)
-            for raid in uncompleted_raids
+            *(
+                self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid.id)
+                for raid in uncompleted_raids
+            )
         )
+
         aw_attacks_exist_completed = asyncio.gather(
-            self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid.id)
-            for raid in completed_raids
+            *(
+                self.raid_stat_service.check_if_attacks_exist(ctx.guild.id, raid.id)
+                for raid in completed_raids
+            )
         )
 
         attacks_exist_uncompleted = await aw_attacks_exist_uncompleted
