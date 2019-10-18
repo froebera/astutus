@@ -11,3 +11,5 @@ from .command_restriction_service import (
     CommandRestrictionService,
     get_command_restriction_service,
 )
+
+from .raid_info_service import RaidInfoService, get_raid_info_service
