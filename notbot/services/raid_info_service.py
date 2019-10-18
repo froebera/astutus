@@ -3,54 +3,11 @@ from logging import getLogger
 from typing import List
 
 from notbot.context import Context, Module
+from notbot.models import TitanInfo, TitanKillPattern
 
 MODULE_NAME = "raid_info_service"
 
 logger = getLogger(__name__)
-
-
-class TitanInfo:
-    def __init__(
-        self,
-        name,
-        torso_health,
-        head_health,
-        arm_health,
-        leg_health,
-        torso_armor,
-        head_armor,
-        arm_armor,
-        leg_armor,
-    ):
-        self.name = name
-        self.torso_health = torso_health
-        self.head_health = head_health
-        self.arm_health = arm_health
-        self.leg_health = leg_health
-
-        # Armor stuff
-        self.torso_armor = torso_armor
-        self.head_armor = head_armor
-        self.arm_armor = arm_armor
-        self.leg_armor = leg_armor
-
-    def __str__(self):
-        return "TitanInfo(name: {}, torso_health: {}, head_health: {}, arm_health: {}, leg_health: {}, torso_armor: {}, head_armor: {}, arm_armor: {}, leg_armor: {})".format(
-            self.name,
-            self.torso_health,
-            self.head_health,
-            self.arm_health,
-            self.leg_health,
-            self.torso_armor,
-            self.head_armor,
-            self.arm_armor,
-            self.leg_armor,
-        )
-
-class TitanKillPattern():
-    def __init__(self, pattern: str, base_hp_multiplier):
-        self.pattern = pattern
-        self.base_hp_multiplier = base_hp_multiplier
 
 class RaidInfoService(Module):
     def __init__(self, context: Context):
@@ -103,8 +60,6 @@ class RaidInfoService(Module):
             for j in range(len(part_health)):
                 if ((i >> j) & 1) == 1:
                     sum += part_health[j]
-                    # print(part_health[j])
-                    # print(sum)
 
             if sum >= 100:
                 parts = []
@@ -135,10 +90,6 @@ class RaidInfoService(Module):
             "Most efficient kill pattern for %s (total hp to kill: %s): %s",
                 titan_info.name, base_hp_multiplier, ", ".join(p)
             )
-        logger.debug(part_health)
-        logger.debug(part_armor)
-        logger.debug(patterns_sorted[0])
-        logger.debug(all_kill_patterns[most_efficient_pattern_idx])
 
         return TitanKillPattern(", ".join(p), base_hp_multiplier)
 
