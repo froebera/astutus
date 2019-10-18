@@ -34,9 +34,9 @@ class RaidInfoService(Module):
                     int(row["ArmourArms"]),
                     int(row["ArmourLegs"]),
                 )
-                self.kill_patterns.append(self.get_titan_kill_pattern(titan_info))
+                self.kill_patterns.append(self.map_row_to_titan_kill_pattern(titan_info))
 
-    def get_titan_kill_pattern(self, titan_info: TitanInfo):
+    def map_row_to_titan_kill_pattern(self, titan_info: TitanInfo):
         part_health = []
         part_armor = []
 
@@ -91,8 +91,14 @@ class RaidInfoService(Module):
                 titan_info.name, base_hp_multiplier, ", ".join(p)
             )
 
-        return TitanKillPattern(", ".join(p), base_hp_multiplier)
+        return TitanKillPattern(titan_info.name, ", ".join(p), base_hp_multiplier)
 
+    def get_titan_kill_pattern(self, titan_name: str):
+        for pattern in self.kill_patterns:
+            if pattern.name == titan_name:
+                return pattern
+
+        return None
 
 
 def get_raid_info_service(context: Context) -> RaidInfoService:
