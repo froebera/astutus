@@ -365,7 +365,7 @@ class RaidModule(commands.Cog, Module):
                 for cycle in range(1, 7):
                     total_attacks = members * cycle * raid_info.attacks_per_reset
                     avg_needed = damage_needed / total_attacks
-                    res.append(f"{cycle} {'cycles' if cycle > 1 else 'cycle '}: **{num_to_hum(avg_needed)}**")
+                    res.append(f"{cycle} {'cycles' if cycle > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
 
         await ctx.send("\n".join(res))
 
