@@ -10,22 +10,21 @@ from discord.ext import commands
 from discord.utils import get
 from datetime import timedelta
 from itertools import zip_longest
-from notbot.cogs.util import create_embed
 import typing
 import asyncio
 import arrow
 import discord
 import logging
 
-from ..services import RaidService, get_raid_service, get_queue_service
+from ..services import RaidService, get_raid_service, get_queue_service, get_raid_info_service
 from .converter.queue import Queue
-from .util import Duration, get_hms, create_embed
+from .util import Duration, get_hms, create_embed, num_to_hum
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
 from notbot.db import get_queue_dao, get_raid_dao
 from notbot.context import Context, Module
 
-from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned, UserAlreadyQueued, UserAttacking
+from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned, UserAlreadyQueued, UserAttacking, RaidInfoNotFound, InvalidTitanCount, InvalidTitansForRaid
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +74,7 @@ class RaidModule(commands.Cog, Module):
         self.raid_dao = get_raid_dao(context)
         self.raid_service = get_raid_service(context)
         self.queue_service = get_queue_service(context)
+        self.raid_info_service = get_raid_info_service(context)
 
     def start(self):
         self.raid_timer.start()
@@ -321,6 +321,48 @@ class RaidModule(commands.Cog, Module):
     @commands.group(name="raid", aliases=["r"], invoke_without_command=True)
     async def raid(self, ctx):
         pass
+
+    @raid.command(
+        name="damageneeded",
+        description="""
+        Calculates the total damage ( Body + Armor ) needed to clear the given raid.
+        If supplied, also calculates based on the member and cycles the least needed average per member to clear the raid
+
+        Example usage: 
+            raid damageneeded 3 3 Sterl,Terro,Lojak,Lojak
+            raid damageneeded 3 3 Sterl,Terro,Lojak,Lojak 50 4
+        """,
+        aliases=["dmg"]
+    )
+    async def raid_damageneeded(
+        self,
+        ctx,
+        raid_tier: int,
+        raid_level: int,
+        titans: str,
+        members: int = 0,
+        cycles: int = 0
+    ):
+        damage_needed = 0
+
+        try:
+            damage_needed = self.raid_info_service.get_damage_needed_to_clear(raid_tier, raid_level, titans.split(","))
+        except (RaidInfoNotFound, InvalidTitanCount, InvalidTitansForRaid) as err:
+            raise commands.BadArgument(str(err))
+
+        res = []
+        res.append(f"Total damage needed to clear {raid_tier}-{raid_level}: **{num_to_hum(damage_needed)}**")
+
+        if members and cycles:
+            raid_info = self.raid_info_service.get_raid_info(raid_tier, raid_level)
+            if raid_info:
+                #should be there
+                total_attacks = members * cycles * raid_info.attacks_per_reset
+                avg_needed = damage_needed / total_attacks
+
+                res.append(f"Required average damage with {members} members to clear it in {cycles} {'cycles' if cycles > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
+
+        await ctx.send("\n".join(res))
 
     @commands.check(is_mod)
     @raid.command(name="setup", description="initial raid config setup")

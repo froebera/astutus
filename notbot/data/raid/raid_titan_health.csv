@@ -1,7 +1,7 @@
-Name,BodyHead,BodyTorso,BodyArms,BodyLegs,ArmourHead,ArmourTorso,ArmourArms,ArmourLegs,Body,Armour
-Lojak,25,40,20,20,25,35,20,20,105,100
-Takedar,35,30,25,15,30,30,25,15,105,100
-Jukk,35,35,35,35,25,25,25,25,140,100
-Sterl,20,65,20,20,20,20,20,20,125,80
-Mohaca,25,25,40,40,25,50,25,25,130,125
-Terro,35,50,30,30,15,20,15,15,145,65​
+Name;BodyHead;BodyTorso;BodyArms;BodyLegs;ArmourHead;ArmourTorso;ArmourArms;ArmourLegs;Body;Armour
+Lojak;25;40;20;20;25;35;20;20;105;100
+Takedar;35;30;25;15;30;30;25;15;105;100
+Jukk;35;35;35;35;25;25;25;25;140;100
+Sterl;20;65;20;20;20;20;20;20;125;80
+Mohaca;25;25;40;40;25;50;25;25;130;125
+Terro;35;50;30;30;15;20;15;15;145;65​

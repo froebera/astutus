@@ -7,3 +7,6 @@ from .raid_already_cleared import RaidAlreadyCleared
 from .raid_unspawned import RaidUnspawned
 from .user_already_queued import UserAlreadyQueued
 from .user_attacking import UserAttacking
+from .raid_info_not_found import RaidInfoNotFound
+from .invalid_titan_count import InvalidTitanCount
+from .invalid_titans_for_raid import InvalidTitansForRaid

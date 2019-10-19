@@ -4,3 +4,4 @@ from .raid import Raid
 from .raid_stats import RaidStats
 from .titan_kill_pattern import TitanKillPattern
 from .titan_info import TitanInfo
+from .raid_info import RaidInfo
