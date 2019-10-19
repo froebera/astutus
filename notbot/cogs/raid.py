@@ -326,11 +326,11 @@ class RaidModule(commands.Cog, Module):
         name="damageneeded",
         description="""
         Calculates the total damage ( Body + Armor ) needed to clear the given raid.
-        If supplied, also calculates based on the member and cycles the least needed average per member to clear the raid
+        If supplied, also calculates based on the member the least needed average per member to clear the raid( for cycles 1-6 )
 
         Example usage: 
             raid damageneeded 3 3 Sterl,Terro,Lojak,Lojak
-            raid damageneeded 3 3 Sterl,Terro,Lojak,Lojak 50 4
+            raid damageneeded 3 3 Sterl,Terro,Lojak,Lojak 50
         """,
         aliases=["dmg"]
     )
@@ -340,8 +340,7 @@ class RaidModule(commands.Cog, Module):
         raid_tier: int,
         raid_level: int,
         titans: str,
-        members: int = 0,
-        cycles: int = 0
+        members: int = 0
     ):
         damage_needed = 0
 
@@ -353,14 +352,20 @@ class RaidModule(commands.Cog, Module):
         res = []
         res.append(f"Total damage needed to clear {raid_tier}-{raid_level}: **{num_to_hum(damage_needed)}**")
 
-        if members and cycles:
+        if members:
             raid_info = self.raid_info_service.get_raid_info(raid_tier, raid_level)
             if raid_info:
                 #should be there
-                total_attacks = members * cycles * raid_info.attacks_per_reset
-                avg_needed = damage_needed / total_attacks
+                # total_attacks = members * cycles * raid_info.attacks_per_reset
+                # avg_needed = damage_needed / total_attacks
 
-                res.append(f"Required average damage with {members} members to clear it in {cycles} {'cycles' if cycles > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
+                # res.append(f"Required average damage with {members} members to clear it in {cycles} {'cycles' if cycles > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
+                
+                res.append(f"Required average damage with {members} members to clear it in")
+                for cycle in range(1, 7):
+                    total_attacks = members * cycle * raid_info.attacks_per_reset
+                    avg_needed = damage_needed / total_attacks
+                    res.append(f"{cycle} {'cycles' if cycle > 1 else 'cycle '}: **{num_to_hum(avg_needed)}**")
 
         await ctx.send("\n".join(res))
 
