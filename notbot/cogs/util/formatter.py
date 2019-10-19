@@ -1,22 +1,28 @@
 import logging
-import humanfriendly
+import math
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
 
+def _remove_exponent(d):
+    return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
+
+
 def num_to_hum(num):
-    num = humanfriendly.format_number(round(num))
-    nmap = "K M B T".split()
-    commas = num.count(",")
-    points = num.split(",")
-    if not commas:
-        return num
-
-    human_friendly_num = f"{points[0]}.{points[1]}{nmap[commas-1]}"
-
-    logger.debug("Formatted %s to %s", num, human_friendly_num)
-
-    return human_friendly_num
+    nmap = ["", "k", "M", "B", "T", "P", "E", "Z", "Y"]
+    num = float(num)
+    idx = max(
+        0,
+        min(
+            len(nmap) - 1, int(math.floor(0 if num == 0 else math.log10(abs(num)) / 3))
+        ),
+    )
+    result = "{:.{precision}f}".format(num / 10 ** (3 * idx), precision=3)
+    result = _remove_exponent(Decimal(result))
+    formatted_result = "{0}{dx}".format(result, dx=nmap[idx])
+    logger.debug("Formatted %s to %s", num, formatted_result)
+    return formatted_result
 
 
 def success_message(message: str):
