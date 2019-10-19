@@ -350,22 +350,16 @@ class RaidModule(commands.Cog, Module):
             raise commands.BadArgument(str(err))
 
         res = []
-        res.append(f"Total damage needed to clear {raid_tier}-{raid_level}: **{num_to_hum(damage_needed)}**")
+        res.append(f"Total damage needed to clear {raid_tier}-{raid_level} ({', '.join(titans.split(','))}): **{num_to_hum(damage_needed)}**")
 
         if members:
             raid_info = self.raid_info_service.get_raid_info(raid_tier, raid_level)
             if raid_info:
-                #should be there
-                # total_attacks = members * cycles * raid_info.attacks_per_reset
-                # avg_needed = damage_needed / total_attacks
-
-                # res.append(f"Required average damage with {members} members to clear it in {cycles} {'cycles' if cycles > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
-                
-                res.append(f"Required average damage with {members} members to clear it in")
+                res.append(f"Required average damage with **{members}** members to clear it in")
                 for cycle in range(1, 7):
                     total_attacks = members * cycle * raid_info.attacks_per_reset
                     avg_needed = damage_needed / total_attacks
-                    res.append(f"{cycle} {'cycles' if cycle > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
+                    res.append(f"  - {cycle} {'cycles' if cycle > 1 else 'cycle'}: **{num_to_hum(avg_needed)}**")
 
         await ctx.send("\n".join(res))
 
