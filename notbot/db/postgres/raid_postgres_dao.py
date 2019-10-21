@@ -163,7 +163,7 @@ class RaidPostgresDao(PostgresDaoBase, Module):
 
     def _map_row_to_raid_model(self, row) -> Raid:
         return Raid(
-            row["id"],
+            int(row["id"]),
             arrow.get(row["started_at"]) if row["started_at"] else None,
             arrow.get(row["cleared_at"]) if row["cleared_at"] else None,
             row["guild_id"],

@@ -1,13 +1,13 @@
 import asyncio
-from discord.ext import commands
-from typing import List, Union
+import math
+from typing import List
 from csv import DictReader
 from logging import getLogger
-import math
+from discord.ext import commands
 
-from ..context import Context, Module
-from notbot.services import get_raid_stat_service, get_raid_service
-from notbot.models import RaidPlayerAttack
+from notbot.context import Context, Module
+from notbot.services import get_raid_stat_service
+from notbot.models import RaidPlayerAttack, RaidAttacks
 import notbot.cogs.util.formatter as formatter
 from .checks import has_raid_management_permissions
 from .util import create_embed, num_to_hum, DATETIME_FORMAT, get_hms
@@ -22,7 +22,6 @@ class RaidStatsModule(commands.Cog, Module):
     def __init__(self, context: Context):
         self.bot = context.get_bot()
         self.raid_stat_service = get_raid_stat_service(context)
-        # self.raid_service = get_raid_service(context)
 
     def get_name(self):
         return MODULE_NAME
@@ -43,9 +42,12 @@ class RaidStatsModule(commands.Cog, Module):
         if not attacks_exist:
             raise commands.BadArgument("Please upload player attacks")
 
+        awaitables = []  # list to collect all messages
         raid_stats = await self.raid_stat_service.calculate_raid_stats(raid_id)
+        raid_data = await self.raid_stat_service.load_raid_data_for_stats(
+            ctx.guild.id, raid_id
+        )
 
-        # gets the days, hours, minutes and seconds of the difference
         duration_hms = get_hms(raid_stats.cleared_at - raid_stats.started_at)
         d_h, d_m, d_s = duration_hms[0], duration_hms[1], duration_hms[2]
 
@@ -97,7 +99,54 @@ class RaidStatsModule(commands.Cog, Module):
 
         embed.add_field(name="**Duration**", value=f"**{d_h}**h **{d_m}**m **{d_s}**s")
 
-        await ctx.send(embed=embed)
+        awaitables.append(ctx.send(embed=embed))
+
+        raid_player_hits = []
+        string_length = 0
+        DISCORD_MAX_CONTENT_LENGHT = 2000 - 50  # some buffer
+
+        latest_raid_data = raid_data[0]
+        if len(raid_data) == 1:
+            reference_raid_data = raid_data[1]
+        else:
+            reference_raid_data = None
+
+        for idx, player_attack in enumerate(latest_raid_data.raid_player_attacks):
+            if reference_raid_data:
+                reference_player_attack = next(
+                    (
+                        raid_player_attack
+                        for raid_player_attack in reference_raid_data.raid_player_attacks
+                        if raid_player_attack.player_id == player_attack.player_id
+                    ),
+                    None,
+                )
+            else:
+                reference_player_attack = None
+
+            stat_string = "{:2}. {:<20}: {:<7}, {:2}, {:<6} ({})".format(
+                idx + 1,
+                player_attack.player_name,
+                num_to_hum(player_attack.total_dmg),
+                player_attack.total_hits,
+                num_to_hum(player_attack.total_dmg / player_attack.total_hits),
+                num_to_hum((player_attack.total_dmg / player_attack.total_hits) - (reference_player_attack.total_dmg / reference_player_attack.total_hits))
+                if reference_player_attack
+                else "",
+            )
+          
+            if string_length + len(stat_string) >= DISCORD_MAX_CONTENT_LENGHT:
+                awaitables.append(
+                    ctx.send("```{}```".format("\n".join(raid_player_hits)))
+                )
+                string_length = 0
+                raid_player_hits.clear()
+
+            string_length += len(stat_string)
+            raid_player_hits.append(stat_string)
+
+        awaitables.append(ctx.send("```{}```".format("\n".join(raid_player_hits))))
+        await asyncio.gather(*(awaitables))
 
     @stats.group(name="raid", invoke_without_command=True)
     async def stats_raid(self, ctx):

@@ -1,12 +1,12 @@
-import logging
 import asyncio
-import arrow
+import logging
 from typing import List
 
+import arrow
 
-from ..context import Context, Module
-from ..db import get_raid_postgres_dao, get_raid_stats_dao
-from notbot.models import Raid, RaidPlayerAttack, RaidStats
+from notbot.context import Context, Module
+from notbot.db import get_raid_postgres_dao, get_raid_stats_dao
+from notbot.models import RaidPlayerAttack, RaidStats
 
 MODULE_NAME = "raid_stat_service"
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class RaidStatService(Module):
             guild_id, started_at, cleared_at
         )
 
-    async def calculate_raid_stats(self, raid_id):
+    async def calculate_raid_stats(self, raid_id: int):
         attacks = await self.get_raid_player_attacks_for_raid_id(raid_id)
         raid = await self.get_raid_for_id(raid_id)
 
@@ -126,6 +126,17 @@ class RaidStatService(Module):
 
     async def delete_attacks_for_raid(self, raid_id):
         await self.raid_stats_dao.delete_attacks_for_raid(raid_id)
+
+    async def load_raid_data_for_stats(self, guild_id, raid_id):
+        """
+            Loads the data needed to create the stats for the given raid_id
+            ( Will include the previous raid if possible )
+        """
+        raid_data = await self.raid_stats_dao.load_raid_data_for_stats(
+            guild_id, raid_id
+        )
+
+        return raid_data
 
 
 def get_raid_stat_service(context: Context) -> RaidStatService:
