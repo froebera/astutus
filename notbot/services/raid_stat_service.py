@@ -80,7 +80,9 @@ class RaidStatService(Module):
             0,
         )
         for attack in attacks:
-            _attack_avg = attack.total_dmg / attack.total_hits
+            _attack_avg = (
+                0 if not attack.total_hits else attack.total_dmg / attack.total_hits
+            )
 
             total_dmg += attack.total_dmg
             total_avg += _attack_avg

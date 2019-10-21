@@ -132,8 +132,10 @@ class RaidStatsModule(commands.Cog, Module):
                 player_attack.player_name,
                 num_to_hum(player_attack.total_dmg),
                 player_attack.total_hits,
-                num_to_hum(player_attack.total_dmg / player_attack.total_hits),
-                num_to_hum((player_attack.total_dmg / player_attack.total_hits) - (reference_player_attack.total_dmg / reference_player_attack.total_hits))
+                num_to_hum(player_attack.total_dmg / player_attack.total_hits) if player_attack.total_hits else 0,
+                num_to_hum(
+                    (player_attack.total_dmg / player_attack.total_hits) if player_attack.total_hits else 0 -
+                    (reference_player_attack.total_dmg / reference_player_attack.total_hits) if reference_player_attack.total_hits else 0)
                 if reference_player_attack
                 else "",
             )
