@@ -106,7 +106,7 @@ class RaidStatsModule(commands.Cog, Module):
         DISCORD_MAX_CONTENT_LENGHT = 2000 - 50  # some buffer
 
         latest_raid_data = raid_data[0]
-        if len(raid_data) == 1:
+        if len(raid_data) > 1:
             reference_raid_data = raid_data[1]
         else:
             reference_raid_data = None
@@ -123,6 +123,9 @@ class RaidStatsModule(commands.Cog, Module):
                 )
             else:
                 reference_player_attack = None
+
+            if not reference_player_attack:
+                logger.debug("Did not found any previous attacks for player: %s (%s)", player_attack.player_name, player_attack.player_id)
 
             stat_string = "{:2}. {:<20}: {:<7}, {:2}, {:<6} ({})".format(
                 idx + 1,
