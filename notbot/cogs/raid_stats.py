@@ -26,7 +26,7 @@ class RaidStatsModule(commands.Cog, Module):
     def get_name(self):
         return MODULE_NAME
 
-    @commands.group(name="stats", invoke_without_command=True)
+    @commands.group(name="raidstats", aliases=["rs"], invoke_without_command=True)
     async def stats(self, ctx, raid_id: int):
         # TODO: check if raid is complete
         has_permission_and_exists, attacks_exist = await asyncio.gather(
@@ -221,7 +221,7 @@ class RaidStatsModule(commands.Cog, Module):
 
     @stats_raid.command(name="delete_attacks")
     @commands.check(has_raid_management_permissions)
-    async def stats_raid_delete_attacks(self, ctx, raid_id):
+    async def stats_raid_delete_attacks(self, ctx, raid_id: int):
         has_permissions_and_exists = await self.raid_stat_service.has_raid_permission_and_raid_exists(
             ctx.guild.id, raid_id
         )
