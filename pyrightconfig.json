@@ -1,0 +1,11 @@
+{
+  "include": ["./notbot"],
+
+  "ignore": ["./modules"],
+
+  "venvPath": "./.venv",
+
+  "reportTypeshedErrors": false,
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": true
+}
