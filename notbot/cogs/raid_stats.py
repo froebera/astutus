@@ -53,13 +53,33 @@ class RaidStatsModule(commands.Cog, Module):
 
         embed = create_embed(self.bot)
 
+        embed.title = f"Raid conclusion (raid_id: {raid_id})"
+
+        embed.add_field(name="**General Info**", value="{}".format(
+            "\n".join([
+                f"Attackers: {raid_stats.attackers}",
+                f"Cycles: {math.ceil(raid_stats.max_hits / 4)}",
+                f"Total Damage Dealt: {num_to_hum(raid_stats.total_dmg)}",
+                f"Started at: {raid_stats.started_at.format(DATETIME_FORMAT)}",
+                f"Cleared at: {raid_stats.cleared_at.format(DATETIME_FORMAT)}",
+                f"Time needed: {d_h}h {d_m}m {d_s}s",
+            ])
+        ), inline=False)
+
+        embed.add_field(
+            name="**Attacks**",
+            value="\n".join(
+                self._create_min_max_avg_texts(raid_stats.min_hits, raid_stats.max_hits)
+            ),
+        )
+
         embed.add_field(
             name="**Average Player Damage**",
             value="\n".join(
                 self._create_min_max_avg_texts(
                     raid_stats.min_avg, raid_stats.max_avg, raid_stats.total_avg
                 )
-            ),
+            )
         )
 
         embed.add_field(
@@ -70,34 +90,6 @@ class RaidStatsModule(commands.Cog, Module):
                 )
             ),
         )
-
-        embed.add_field(
-            name="**Attacks**",
-            value="\n".join(
-                self._create_min_max_avg_texts(raid_stats.min_hits, raid_stats.max_hits)
-            ),
-        )
-
-        embed.add_field(
-            name="**Total Damage Dealt**",
-            value="{}".format(num_to_hum(raid_stats.total_dmg)),
-        )
-
-        embed.add_field(
-            name="**Cycles**", value="{}".format(math.ceil(raid_stats.max_hits / 4))
-        )
-
-        embed.add_field(name="**Attackers**", value="{}".format(raid_stats.attackers))
-
-        embed.add_field(
-            name="**Started**", value=raid_stats.started_at.format(DATETIME_FORMAT)
-        )
-
-        embed.add_field(
-            name="**Cleared**", value=raid_stats.cleared_at.format(DATETIME_FORMAT)
-        )
-
-        embed.add_field(name="**Duration**", value=f"**{d_h}**h **{d_m}**m **{d_s}**s")
 
         awaitables.append(ctx.send(embed=embed))
 
@@ -127,17 +119,26 @@ class RaidStatsModule(commands.Cog, Module):
             if not reference_player_attack:
                 logger.debug("Did not found any previous attacks for player: %s (%s)", player_attack.player_name, player_attack.player_id)
 
-            stat_string = "{:2}. {:<20}: {:<7}, {:2}, {:<6} ({})".format(
+
+            player_average = player_attack.total_dmg / player_attack.total_hits if player_attack.total_hits else 0
+            player_reference_average = 0
+
+            if reference_player_attack and reference_player_attack.total_hits:
+                player_reference_average = reference_player_attack.total_dmg / reference_player_attack.total_hits
+            
+            player_average_diff = player_average - player_reference_average
+            player_average_diff_str = "({}{})".format(
+                "+" if player_average_diff > 0 else "",
+                num_to_hum(player_average_diff)
+            )
+
+            stat_string = "{:2}. {:<20}: {:>8}, {:2}, {:>8} {}".format(
                 idx + 1,
                 player_attack.player_name,
                 num_to_hum(player_attack.total_dmg),
                 player_attack.total_hits,
-                num_to_hum(player_attack.total_dmg / player_attack.total_hits) if player_attack.total_hits else 0,
-                num_to_hum(
-                    (player_attack.total_dmg / player_attack.total_hits) if player_attack.total_hits else 0 -
-                    (reference_player_attack.total_dmg / reference_player_attack.total_hits) if reference_player_attack.total_hits else 0)
-                if reference_player_attack
-                else "",
+                num_to_hum(player_average),
+                player_average_diff_str if reference_player_attack else "",
             )
           
             if string_length + len(stat_string) >= DISCORD_MAX_CONTENT_LENGHT:
