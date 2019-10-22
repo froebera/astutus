@@ -148,6 +148,9 @@ class RaidService(Module):
 
         await self.queue_service.reset_queue(guild_id, "default")
 
+    async def get_last_completed_raid(self, guild_id):
+        return await self.raid_postgres_dao.get_last_completed_raid(guild_id)
+
 
 def get_raid_service(context: Context) -> RaidService:
     return context.get_or_register_module(MODULE_NAME, lambda: RaidService(context))

@@ -14,8 +14,24 @@ class RaidPostgresDao(PostgresDaoBase, Module):
     def get_name(self):
         return MODULE_NAME
 
-    async def get_last_cleared_raid(self, guild_id):
-        pass
+    async def get_last_completed_raid(self, guild_id):
+        async with self.connection() as connection:
+            row = await connection.fetchrow(
+                """
+                SELECT r.*
+                FROM raid r
+                JOIN raid_player_attack rpa on rpa.raid_id = r.id
+                WHERE
+                    guild_id = $1
+                GROUP BY r.id
+                ORDER BY cleared_at DESC
+                """,
+                str(guild_id),
+            )
+            if not row:
+                return None
+
+            return self._map_row_to_raid_model(row)
 
     async def create_start_raid_stat_entry(self, guild_id, started_at: arrow.Arrow):
         async with self.connection() as connection:

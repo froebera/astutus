@@ -1,12 +1,12 @@
 import asyncio
 import math
-from typing import List
+from typing import List, Optional
 from csv import DictReader
 from logging import getLogger
 from discord.ext import commands
 
 from notbot.context import Context, Module
-from notbot.services import get_raid_stat_service
+from notbot.services import get_raid_stat_service, get_raid_service
 from notbot.models import RaidPlayerAttack, RaidAttacks
 import notbot.cogs.util.formatter as formatter
 from .checks import has_raid_management_permissions
@@ -22,13 +22,21 @@ class RaidStatsModule(commands.Cog, Module):
     def __init__(self, context: Context):
         self.bot = context.get_bot()
         self.raid_stat_service = get_raid_stat_service(context)
+        self.raid_service = get_raid_service(context)
 
     def get_name(self):
         return MODULE_NAME
 
     @commands.group(name="raidstats", aliases=["rs"], invoke_without_command=True)
-    async def stats(self, ctx, raid_id: int):
+    async def stats(self, ctx, raid_id: Optional[int]):
         # TODO: check if raid is complete
+        if not raid_id:
+            last_cleared_raid = await self.raid_service.get_last_completed_raid(ctx.guild.id)
+            if not last_cleared_raid:
+                raise commands.BadArgument("Could not find any completed ( including uploaded attacks ) raid for your guild")
+
+            raid_id = last_cleared_raid.id
+
         has_permission_and_exists, attacks_exist = await asyncio.gather(
             self.raid_stat_service.has_raid_permission_and_raid_exists(
                 ctx.guild.id, raid_id
