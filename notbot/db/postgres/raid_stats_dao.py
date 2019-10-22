@@ -97,7 +97,7 @@ class RaidStatsDao(PostgresDaoBase, Module):
                          LIMIT 1
                      )
                 )
-                ORDER BY cleared_at DESC
+                ORDER BY cleared_at DESC, rpa.total_dmg DESC
                 """,
                 raid_id,
                 str(guild_id),
