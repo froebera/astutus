@@ -85,12 +85,12 @@ class RaidInfoService(Module):
 
         all_kill_patterns = []
         for i in range(1, 1 << len(part_health)):
-            sum = 0
+            _sum = 0
             for j in range(len(part_health)):
                 if ((i >> j) & 1) == 1:
-                    sum += part_health[j]
+                    _sum += part_health[j]
 
-            if sum >= 100:
+            if _sum >= 100:
                 parts = []
                 for j in range(len(part_health)):
                     if (i & (1 << j)) > 0:
