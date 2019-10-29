@@ -8,10 +8,12 @@ from discord import Role, Emoji, User, Status
 from .util import create_embed
 from .converter import GlobalUserConverter
 from ..context import Context, Module
+import re
 
 logger = logging.getLogger(__name__)
 
 MODULE_NAME = "info_module"
+
 
 class InfoModule(commands.Cog, Module):
     def __init__(self, context: Context):
@@ -57,11 +59,13 @@ class InfoModule(commands.Cog, Module):
         brief="Displays a larger version of the given emoji",
         description="Displays a larger version of the given emoji. Does not work with Discords default emojis",
     )
-    async def emoji(self, ctx, emoji: Union[Emoji]):
-        e: Emoji = emoji
+    async def emoji(self, ctx, emoji):
+        EMOJI = re.compile(r"^<a?:\w+:\d+>$")
+        if not EMOJI.match(emoji):
+            raise commands.BadArgument("Invalid emoji!")
+        split = emoji.replace(">", "").replace("<", "").split(":")
+        animate, name, id = split
 
-        id = e.id
-        name = e.name
         url = f"https://cdn.discordapp.com/emojis/{id}"
 
         embed = create_embed(ctx.bot)
@@ -183,6 +187,7 @@ class InfoModule(commands.Cog, Module):
                         issue_body = "<>"
                     embed.add_field(name=issue_title, value=issue_body, inline=False)
         await ctx.send(embed=embed)
+
 
 def setup(bot):
     context: Context = bot.context
