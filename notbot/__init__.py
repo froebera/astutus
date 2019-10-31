@@ -19,6 +19,7 @@ from .cogs.restriction import RestrictionModule
 from .cogs.raid_stats import RaidStatsModule
 from .cogs.personal_commands import PersonalCommandsModule
 from .cogs.fun import FunModule
+from .cogs.settings import SettingsModule
 
 
 def apply_overwrite(node: dict, key, value):
@@ -68,4 +69,5 @@ context = (
     .with_module(RaidStatsModule)
     .with_module(PersonalCommandsModule)
     .with_module(FunModule)
+    .with_module(SettingsModule)
 )

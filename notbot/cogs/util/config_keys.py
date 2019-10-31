@@ -35,3 +35,5 @@ EFFICIENCY_LETHAL_BONUS = "lethal_bonus"
 CMD_RESTRICTIONS_USER = "{}:restriction:user:{}"
 CMD_RESTRICTIONS_ROLE = "{}:restriction:role:{}"
 CMD_RESTRICTIONS_CHANNEL = "{}:restriction:channel:{}"
+
+PPREFIX = "pprefix"

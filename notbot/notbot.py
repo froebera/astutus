@@ -1,17 +1,19 @@
-import logging
-import contextvars
 from contextvars import ContextVar
-import traceback
-import discord
-from itertools import cycle
-from discord.ext import commands
-from discord.ext import tasks
-from discord.utils import get
-from .services import get_config_service, get_command_restriction_service
-from .context import Context
-import arrow
 from datetime import timedelta
+from itertools import cycle
+import logging
+import traceback
+
+import arrow
+import discord
+from discord.ext import tasks
+from discord.ext import commands
+from discord.utils import get
+
 from .cogs.util import create_embed
+from .context import Context
+from .services import (
+    get_command_restriction_service, get_config_service, get_settings_service)
 
 extension_prefix = "notbot."
 extensions = [
@@ -22,7 +24,8 @@ extensions = [
     "cogs.restriction",
     "cogs.raid_stats",
     "cogs.personal_commands",
-    "cogs.fun"
+    "cogs.fun",
+    "cogs.settings",
 ]
 
 logger = logging.getLogger(__name__)
@@ -31,28 +34,26 @@ command_execution_start: ContextVar[arrow.Arrow] = ContextVar("command_execution
 
 ACTIVITY_CYCLE = cycle(
     [
-        discord.Activity(name='with timers', type=discord.ActivityType.playing),
-        discord.Activity(name='with queues', type=discord.ActivityType.playing),
-        discord.Activity(name='everyone fail commands', type=discord.ActivityType.watching),
-        discord.Activity(name='NOTME breaking stuff', type=discord.ActivityType.watching),
+        discord.Activity(name="with timers", type=discord.ActivityType.playing),
+        discord.Activity(name="with queues", type=discord.ActivityType.playing),
+        discord.Activity(
+            name="everyone fail commands", type=discord.ActivityType.watching
+        ),
+        discord.Activity(
+            name="NOTME breaking stuff", type=discord.ActivityType.watching
+        ),
     ]
 )
+
 
 async def prefix_callable(bot, message) -> list:
     user_id = bot.user.id
     prefix_base = [f"<@!{user_id}> ", f"<@{user_id}> "]
     if message.guild is not None:
         prefix_base.append(bot.default_prefix)
-    #     custom = await bot.db.hget(f"{message.guild.id}:set", "pfx")
-    #     if custom or custom is not None:
-    #         prefix_base.append(custom)
-    #     pprefix_enabled = await bot.db.hget(f"{message.guild.id}:toggle", "pprefix")
-    #     if pprefix_enabled is not None and pprefix_enabled != "0":
-    #         pprefix = await bot.db.hget("pprefix", message.author.id)
-    #         if pprefix is not None:
-    #             prefix_base.append(pprefix)
+        pprefix = await get_settings_service(bot.context).get_pprefix(message.author.id)
+        prefix_base.append(pprefix)
     return prefix_base
-    # return "?"
 
 
 class NOTBOT(commands.AutoShardedBot):
@@ -89,7 +90,9 @@ class NOTBOT(commands.AutoShardedBot):
 
     @cycle_presence.before_loop
     async def wait_for_bot(self):
-        logger.debug("Waiting for the bot to be ready before starting the cycle_presence task")
+        logger.debug(
+            "Waiting for the bot to be ready before starting the cycle_presence task"
+        )
         await self.wait_until_ready()
 
     async def on_ready(self):

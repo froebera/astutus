@@ -13,3 +13,4 @@ from .command_restriction_service import (
 )
 
 from .raid_info_service import RaidInfoService, get_raid_info_service
+from .settings_service import SettingsService, get_settings_service

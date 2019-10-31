@@ -48,7 +48,7 @@ class Context:
         self.module_map[module_name] = module
 
     def get_or_register_module(self, module_name, creator: Callable[[], Module]):
-        logger.info(
+        logger.debug(
             "%sRequesting module %s", " " * (3 * self.creationDepth), module_name
         )
         module = self._maybe_get_module(module_name)

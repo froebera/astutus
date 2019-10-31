@@ -1,6 +1,7 @@
 import logging
 import math
 from decimal import Decimal
+from discord import User
 
 logger = logging.getLogger(__name__)
 
@@ -27,3 +28,7 @@ def num_to_hum(num):
 
 def success_message(message: str):
     return ":white_check_mark: {}".format(message)
+
+
+def format_user_name(user: User) -> str:
+    return user.nick if user.nick else user.name

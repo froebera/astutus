@@ -6,6 +6,7 @@ from .redis.command_restriction_dao import (
     CommandRestrictionDao,
     get_command_restriction_dao,
 )
+from .redis.settings_dao import SettingsDao, get_settings_dao
 from .postgres.postgres_connection import PostgresConnection, get_postgres_connection
 from .postgres.raid_stats_dao import RaidStatsDao, get_raid_stats_dao
 from .postgres.raid_postgres_dao import get_raid_postgres_dao, RaidPostgresDao
