@@ -34,7 +34,9 @@ class SettingsModule(commands.Cog, Module):
         if pprefix is None and pprfx is None:
             raise commands.BadArgument("You do not have a personal prefix.")
         if pprefix is None and pprfx is not None:
-            await ctx.send(f":information_source: Your personal prefix is **{pprfx}**")
+            await ctx.send(
+                f":information_source: Your personal prefix is **{'nothing' if pprfx == '' else pprfx}**"
+            )
             return
         if pprefix is None:
             raise commands.BadArgument("You should specify a prefix.")
