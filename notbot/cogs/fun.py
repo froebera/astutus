@@ -79,7 +79,7 @@ class FunModule(commands.Cog, Module):
 
         transformed_message = self.transform_message(message.content)
         await ctx.send(
-            content=f"{transformed_message} <:spongebob_mock:639394358990209034>"
+            content=f"**{message.author.nick if message.author.nick else message.author.name}**: {transformed_message} <:spongebob_mock:639394358990209034>"
         )
 
     def transform_message(self, message: str) -> str:
