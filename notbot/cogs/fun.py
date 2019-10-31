@@ -3,6 +3,7 @@ from discord.ext import commands
 from typing import Set
 from logging import getLogger
 from random import random
+from discord import Message
 
 MODULE_NAME = "fun_module"
 logger = getLogger(__name__)
@@ -68,6 +69,18 @@ class FunModule(commands.Cog, Module):
             await channel.send(
                 content=f"**{ctx.author.nick if ctx.author.nick else ctx.author.name}**: {transformed_message} <:spongebob_mock:639394358990209034>"
             )
+
+    @commands.command(name="mock")
+    async def mock(self, ctx, message: Message):
+        try:
+            await ctx.message.delete()
+        except:
+            await ctx.send("I cannot do that here :(")
+
+        transformed_message = self.transform_message(message.content)
+        await ctx.send(
+            content=f"{transformed_message} <:spongebob_mock:639394358990209034>"
+        )
 
     def transform_message(self, message: str) -> str:
         msgbuff = ""
