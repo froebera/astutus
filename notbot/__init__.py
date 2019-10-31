@@ -18,6 +18,7 @@ from .cogs.efficiency import EfficiencyModule
 from .cogs.restriction import RestrictionModule
 from .cogs.raid_stats import RaidStatsModule
 from .cogs.personal_commands import PersonalCommandsModule
+from .cogs.fun import FunModule
 
 
 def apply_overwrite(node: dict, key, value):
@@ -55,14 +56,6 @@ def setup_logging():
         logging.basicConfig(level="INFO")
 
 
-# def get_config(configuration_file: str = "default_config.ini"):
-#     config = configparser.ConfigParser()
-#     config.read("default_config.ini")
-#     if configuration_file != "default_config.ini":
-#         config.read(configuration_file)
-#     return config
-
-
 setup_logging()
 
 context = (
@@ -74,7 +67,5 @@ context = (
     .with_module(RestrictionModule)
     .with_module(RaidStatsModule)
     .with_module(PersonalCommandsModule)
+    .with_module(FunModule)
 )
-
-# context.start()
-# bot = NOTBOT(ctx=context)
