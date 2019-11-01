@@ -115,7 +115,7 @@ class NOTBOT(commands.AutoShardedBot):
             return
 
         command_name = self.get_full_name_for_called_command(ctx)
-        logger.debug("Full command name: %s", command_name)
+        logger.info("Command \"%s\" invoked by %s (message content: \"%s\")", command_name, ctx.author, message.content)
 
         cmd_name = command_name
         inherited = False
