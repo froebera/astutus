@@ -116,13 +116,13 @@ class NOTBOT(commands.AutoShardedBot):
             return
 
         if ctx.command is None:
-            if ctx.prefix is not "":
+            if ctx.prefix and  ctx.prefix is not "":
                 # if the user has set there prefix to nothing, dont spam them ;)
                 await ctx.send(f"Sorry, i dont know the command **{ctx.invoked_with}** :(")
             return
 
         command_name = self.get_full_name_for_called_command(ctx)
-        logger.info("Command \"%s\" invoked by %s (message content: \"%s\")", command_name, ctx.author, message.content)
+        logger.info("Command \"%s\" invoked by %s in %s (message content: \"%s\")", command_name, ctx.author, ctx.channel, message.content)
 
         cmd_name = command_name
         inherited = False
