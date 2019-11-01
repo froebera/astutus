@@ -52,7 +52,7 @@ async def prefix_callable(bot, message) -> list:
     if message.guild is not None:
         prefix_base.append(bot.default_prefix)
         pprefix = await get_settings_service(bot.context).get_pprefix(message.author.id)
-        if pprefix:
+        if pprefix is not None and isinstance(pprefix, str):
             prefix_base.append(pprefix)
     return prefix_base
 
@@ -118,7 +118,7 @@ class NOTBOT(commands.AutoShardedBot):
             return
 
         if ctx.command is None:
-            if ctx.prefix and  ctx.prefix is not "":
+            if ctx.prefix and ctx.prefix is not "":
                 # if the user has set there prefix to nothing, dont spam them ;)
                 await ctx.send(f"Sorry, i dont know the command **{ctx.invoked_with}** :(")
             return
