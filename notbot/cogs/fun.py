@@ -1,6 +1,6 @@
 from notbot.context import Context, Module
 from discord.ext import commands
-from typing import Set
+from typing import Set, Union
 from logging import getLogger
 from random import random
 from discord import Message
@@ -70,17 +70,32 @@ class FunModule(commands.Cog, Module):
                 content=f"**{ctx.author.nick if ctx.author.nick else ctx.author.name}**: {transformed_message} <:spongebob_mock:639394358990209034>"
             )
 
-    @commands.command(name="mock")
-    async def mock(self, ctx, message: Message):
+    @commands.command(
+        name="mock",
+        description="""
+    Mocks a message or text.
+
+        - message: ID from a discord message on the same server, or some text
+    """,
+    )
+    async def mock(self, ctx, *, message: Union[Message, str]):
         try:
             await ctx.message.delete()
         except:
             await ctx.send("I cannot do that here :(")
+            return
 
-        transformed_message = self.transform_message(message.content)
-        await ctx.send(
-            content=f"**{message.author.nick if message.author.nick else message.author.name}**: {transformed_message} <:spongebob_mock:639394358990209034>"
-        )
+        if isinstance(message, str):
+            transformed_message = self.transform_message(message)
+            await ctx.send(
+                content=f"{transformed_message} <:spongebob_mock:639394358990209034>"
+            )
+
+        else:
+            transformed_message = self.transform_message(message.content)
+            await ctx.send(
+                content=f"**{message.author.nick if message.author.nick else message.author.name}**: {transformed_message} <:spongebob_mock:639394358990209034>"
+            )
 
     def transform_message(self, message: str) -> str:
         msgbuff = ""
