@@ -116,7 +116,9 @@ class NOTBOT(commands.AutoShardedBot):
             return
 
         if ctx.command is None:
-            await ctx.send(f"Sorry, i dont know the command **{ctx.invoked_with}** :(")
+            if ctx.prefix is not "":
+                # if the user has set there prefix to nothing, dont spam them ;)
+                await ctx.send(f"Sorry, i dont know the command **{ctx.invoked_with}** :(")
             return
 
         command_name = self.get_full_name_for_called_command(ctx)
