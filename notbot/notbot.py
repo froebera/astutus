@@ -116,7 +116,7 @@ class NOTBOT(commands.AutoShardedBot):
             return
 
         if ctx.command is None:
-            await ctx.send("Sorry, i dont know that command :(")
+            await ctx.send(f"Sorry, i dont know the command **{ctx.invoked_with}** :(")
             return
 
         command_name = self.get_full_name_for_called_command(ctx)
