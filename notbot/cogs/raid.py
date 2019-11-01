@@ -21,6 +21,7 @@ from .converter.queue import Queue
 from .util import Duration, get_hms, create_embed, num_to_hum
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
 from .util.config_keys import *
+from .util.formatter import format_user_name
 from notbot.db import get_queue_dao, get_raid_dao
 from notbot.context import Context, Module
 
@@ -495,11 +496,11 @@ class RaidModule(commands.Cog, Module):
         try:
             await self.queue_service.queue_up(ctx.author.id, ctx.guild.id, queue)
         except UserAlreadyQueued as err:
-            raise commands.BadArgument(f"Sorry **{ctx.author.name}**, you are already **#{err.queued_index + 1}** in the queue")
+            raise commands.BadArgument(f"Sorry **{format_user_name(ctx.author)}**, you are already **#{err.queued_index + 1}** in the queue")
         except UserAttacking:
-            await ctx.send(f"**{ctx.author.name}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
+            await ctx.send(f"**{format_user_name(ctx.author)}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
 
-        await ctx.send(f":white_check_mark: Ok **{ctx.author.name}**, i've added you to the queue")
+        await ctx.send(f":white_check_mark: Ok **{format_user_name(ctx.author)}**, i've added you to the queue")
 
     @raid_queue.command(name="show")
     @commands.check(raidconfig_exists)
@@ -587,13 +588,13 @@ class RaidModule(commands.Cog, Module):
         current_users = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
 
         if str(ctx.author.id) in current_users:
-            raise commands.BadArgument(f"**{ctx.author.name}**, its currently your turn. Use **{ctx.prefix}raid done {queue}**")
+            raise commands.BadArgument(f"**{format_user_name(ctx.author)}**, its currently your turn. Use **{ctx.prefix}raid done {queue}**")
         
         if not str(ctx.author.id) in queued_users:
-            raise commands.BadArgument(f"**{ctx.author.name}**, you are currently not queued")
+            raise commands.BadArgument(f"**{format_user_name(ctx.author)}**, you are currently not queued")
         
         await self.queue_dao.remove_user_from_queued_users(ctx.guild.id, queue, ctx.author.id)
-        await ctx.send(f":white_check_mark: Ok {ctx.author.name}, i removed you from queue")
+        await ctx.send(f":white_check_mark: Ok **{format_user_name(ctx.author)}**, i removed you from queue")
 
     @raid.command(name="done", aliases=["d"])
     @commands.check(has_clan_role)
@@ -606,14 +607,14 @@ class RaidModule(commands.Cog, Module):
 
         if not str(ctx.author.id) in current_users:
             if not str(ctx.author.id) in queued_users:
-                raise commands.BadArgument(f"**{ctx.author.name}**, it's not your turn and you're not queued.")
+                raise commands.BadArgument(f"**{format_user_name(ctx.author)}**, it's not your turn and you're not queued.")
             else:
-                raise commands.BadArgument(f"**{ctx.author.name}**, not your go. Do **{ctx.prefix}raid unqueue {queue}** instead.")
+                raise commands.BadArgument(f"**{format_user_name(ctx.author)}**, not your go. Do **{ctx.prefix}raid unqueue {queue}** instead.")
         else:
             current_users = " ".join(current_users)
             current_users = current_users.replace(str(ctx.author.id), "")
             await self.queue_dao.set_current_users(ctx.guild.id, queue, current_users.strip())
-            await ctx.send(f"**{ctx.author}** has finished their turn.")
+            await ctx.send(f"**{format_user_name(ctx.author)}** has finished their turn.")
             return
 
     @commands.group(name="raidconfig", invoke_without_command=True)

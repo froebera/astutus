@@ -4,6 +4,7 @@ from typing import Set, Union
 from logging import getLogger
 from random import random
 from discord import Message
+from .util.formatter import format_user_name
 
 MODULE_NAME = "fun_module"
 logger = getLogger(__name__)
@@ -36,7 +37,7 @@ class FunModule(commands.Cog, Module):
             )
             self.mayhem_channels.add(ctx.channel.id)
             await ctx.send(
-                f"**{ctx.author.nick if ctx.author.nick else ctx.author.name}** started the mayhem mode. Lets get this party started!!"
+                f"**{format_user_name(ctx.author)}** started the mayhem mode. Lets get this party started!!"
             )
         else:
             self.mayhem_channels.discard(channel_id)
@@ -67,7 +68,7 @@ class FunModule(commands.Cog, Module):
             )
             await message.delete()
             await channel.send(
-                content=f"**{ctx.author.nick if ctx.author.nick else ctx.author.name}**: {transformed_message} <:spongebob_mock:639394358990209034>"
+                content=f"**{format_user_name(ctx.author)}**: {transformed_message} <:spongebob_mock:639394358990209034>"
             )
 
     @commands.command(
