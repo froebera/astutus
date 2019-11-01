@@ -111,7 +111,12 @@ class NOTBOT(commands.AutoShardedBot):
         checks for channel/guild/user permissions before executing any commanc
         """
         ctx = await self.get_context(message)
+        if ctx.author.bot or not getattr(ctx, "guild"):
+            # ignore bots and dms
+            return
+
         if ctx.command is None:
+            await ctx.send("Sorry, i dont know that command :(")
             return
 
         command_name = self.get_full_name_for_called_command(ctx)
