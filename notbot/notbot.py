@@ -52,7 +52,8 @@ async def prefix_callable(bot, message) -> list:
     if message.guild is not None:
         prefix_base.append(bot.default_prefix)
         pprefix = await get_settings_service(bot.context).get_pprefix(message.author.id)
-        prefix_base.append(pprefix)
+        if pprefix:
+            prefix_base.append(pprefix)
     return prefix_base
 
 
@@ -110,6 +111,7 @@ class NOTBOT(commands.AutoShardedBot):
 
         checks for channel/guild/user permissions before executing any commanc
         """
+
         ctx = await self.get_context(message)
         if ctx.author.bot or not getattr(ctx, "guild"):
             # ignore bots and dms
