@@ -13,7 +13,10 @@ from discord.utils import get
 from .cogs.util import create_embed
 from .context import Context
 from .services import (
-    get_command_restriction_service, get_config_service, get_settings_service)
+    get_command_restriction_service,
+    get_config_service,
+    get_settings_service,
+)
 
 extension_prefix = "notbot."
 extensions = [
@@ -71,10 +74,9 @@ class NOTBOT(commands.AutoShardedBot):
         self.context: Context = ctx
         self.context.set_bot(self)
         self.context.start()
-        config_service = get_config_service(ctx)
+        self._config_service = get_config_service(ctx)
         self.command_restriction_service = get_command_restriction_service(ctx)
-        self.default_prefix: str = config_service.get_config("DEFAULT")["prefix"]
-        # self.remove_command("help")
+        self.default_prefix: str = self._config_service.get_config("NOTBOT")["prefix"]
         for extension in extensions:
             e = extension_prefix + extension
             try:
@@ -120,11 +122,28 @@ class NOTBOT(commands.AutoShardedBot):
         if ctx.command is None:
             if ctx.prefix and ctx.prefix is not "":
                 # if the user has set there prefix to nothing, dont spam them ;)
-                await ctx.send(f"Sorry, i dont know the command **{ctx.invoked_with}** :(")
+                await ctx.send(
+                    f"Sorry, i dont know the command **{ctx.invoked_with}** :("
+                )
             return
 
         command_name = self.get_full_name_for_called_command(ctx)
-        logger.info("Command \"%s\" invoked by %s in %s (message content: \"%s\")", command_name, ctx.author, ctx.channel, message.content)
+
+        truncate_text_after = int(
+            self._config_service.get_config("NOTBOT")["command_invoke_log_max_lenght"]
+        )
+        message_content_truncated = (
+            message.content[:truncate_text_after] + "..."
+            if len(message.content) > truncate_text_after + 3
+            else message.content
+        )
+        logger.info(
+            'Command "%s" invoked by %s in %s (message content: "%s")',
+            command_name,
+            ctx.author,
+            ctx.channel,
+            message_content_truncated,
+        )
 
         cmd_name = command_name
         inherited = False
@@ -199,7 +218,7 @@ class NOTBOT(commands.AutoShardedBot):
 
     def run(self):
         config_service = get_config_service(self.context)
-        token = config_service.get_config("DEFAULT")["token"]
+        token = config_service.get_config("NOTBOT")["token"]
         super().run(token, reconnect=True)
 
     def get_full_name_for_called_command(self, ctx):

@@ -16,7 +16,7 @@ import arrow
 import discord
 import logging
 
-from ..services import RaidService, get_raid_service, get_queue_service, get_raid_info_service
+from notbot.services import RaidService, get_raid_service, get_queue_service, get_raid_info_service
 from .converter.queue import Queue
 from .util import Duration, get_hms, create_embed, num_to_hum
 from .checks import raidconfig_exists, has_raid_management_permissions, has_raid_timer_permissions, is_mod, has_clan_role
