@@ -20,7 +20,8 @@ def num_to_hum(num):
         ),
     )
     result = "{:.{precision}f}".format(num / 10 ** (3 * idx), precision=3)
-    result = _remove_exponent(Decimal(result))
+
+    # result = _remove_exponent(Decimal(result))
     formatted_result = "{0}{dx}".format(result, dx=nmap[idx])
     logger.debug("Formatted %s to %s", num, formatted_result)
     return formatted_result
