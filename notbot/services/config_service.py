@@ -16,6 +16,11 @@ class ConfigService(Module):
 
     def start(self):
         self.config = self._read_config("config.ini")
+        logger.debug("Configuration:")
+        for section in self.config.sections():
+            logger.debug("[%s]", section)
+            for (key, value) in self.config.items(section):
+                logger.debug("  %s: %s", key, self._mask_config_value(key, value))
 
     def _read_config(self, configuration_file: str = "default_config.ini"):
         config = configparser.ConfigParser()
@@ -23,6 +28,12 @@ class ConfigService(Module):
         if configuration_file != "default_config.ini":
             config.read(configuration_file)
         return config
+
+    def _mask_config_value(self, config_key: str, config_value: str) -> str:
+        to_mask = ["password", "pw", "pwd", "token"]
+        if config_key in to_mask:
+            return "*******"
+        return config_value
 
     def get_config(self, config_name):
         return self.config[config_name]
