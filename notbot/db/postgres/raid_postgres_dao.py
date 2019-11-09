@@ -23,6 +23,8 @@ class RaidPostgresDao(PostgresDaoBase, Module):
                 JOIN raid_player_attack rpa on rpa.raid_id = r.id
                 WHERE
                     guild_id = $1
+                    AND cleared_at IS NOT NULL
+                    AND started_at IS NOT NULL
                 GROUP BY r.id
                 ORDER BY cleared_at DESC
                 """,

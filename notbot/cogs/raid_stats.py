@@ -31,9 +31,13 @@ class RaidStatsModule(commands.Cog, Module):
     async def stats(self, ctx, raid_id: Optional[int]):
         # TODO: check if raid is complete
         if not raid_id:
-            last_cleared_raid = await self.raid_service.get_last_completed_raid(ctx.guild.id)
+            last_cleared_raid = await self.raid_service.get_last_completed_raid(
+                ctx.guild.id
+            )
             if not last_cleared_raid:
-                raise commands.BadArgument("Could not find any completed ( including uploaded attacks ) raid for your guild")
+                raise commands.BadArgument(
+                    "Could not find any completed ( including uploaded attacks ) raid for your guild"
+                )
 
             raid_id = last_cleared_raid.id
 
@@ -50,6 +54,8 @@ class RaidStatsModule(commands.Cog, Module):
         if not attacks_exist:
             raise commands.BadArgument("Please upload player attacks")
 
+        logger.debug("Loading raid stats for raid %s", raid_id)
+
         awaitables = []  # list to collect all messages
         raid_stats = await self.raid_stat_service.calculate_raid_stats(raid_id)
         raid_data = await self.raid_stat_service.load_raid_data_for_stats(
@@ -63,16 +69,22 @@ class RaidStatsModule(commands.Cog, Module):
 
         embed.title = f"Raid conclusion (raid_id: {raid_id})"
 
-        embed.add_field(name="**General Info**", value="{}".format(
-            "\n".join([
-                f"Attackers: {raid_stats.attackers}",
-                f"Cycles: {math.ceil(raid_stats.max_hits / 4)}",
-                f"Total Damage Dealt: {num_to_hum(raid_stats.total_dmg)}",
-                f"Started at: {raid_stats.started_at.format(DATETIME_FORMAT)}",
-                f"Cleared at: {raid_stats.cleared_at.format(DATETIME_FORMAT)}",
-                f"Time needed: {d_h}h {d_m}m {d_s}s",
-            ])
-        ), inline=False)
+        embed.add_field(
+            name="**General Info**",
+            value="{}".format(
+                "\n".join(
+                    [
+                        f"Attackers: {raid_stats.attackers}",
+                        f"Cycles: {math.ceil(raid_stats.max_hits / 4)}",
+                        f"Total Damage Dealt: {num_to_hum(raid_stats.total_dmg)}",
+                        f"Started at: {raid_stats.started_at.format(DATETIME_FORMAT)}",
+                        f"Cleared at: {raid_stats.cleared_at.format(DATETIME_FORMAT)}",
+                        f"Time needed: {d_h}h {d_m}m {d_s}s",
+                    ]
+                )
+            ),
+            inline=False,
+        )
 
         embed.add_field(
             name="**Attacks**",
@@ -87,7 +99,7 @@ class RaidStatsModule(commands.Cog, Module):
                 self._create_min_max_avg_texts(
                     raid_stats.min_avg, raid_stats.max_avg, raid_stats.total_avg
                 )
-            )
+            ),
         )
 
         embed.add_field(
@@ -125,19 +137,28 @@ class RaidStatsModule(commands.Cog, Module):
                 reference_player_attack = None
 
             if not reference_player_attack:
-                logger.debug("Did not found any previous attacks for player: %s (%s)", player_attack.player_name, player_attack.player_id)
+                logger.debug(
+                    "Did not found any previous attacks for player: %s (%s)",
+                    player_attack.player_name,
+                    player_attack.player_id,
+                )
 
-
-            player_average = player_attack.total_dmg / player_attack.total_hits if player_attack.total_hits else 0
+            player_average = (
+                player_attack.total_dmg / player_attack.total_hits
+                if player_attack.total_hits
+                else 0
+            )
             player_reference_average = 0
 
             if reference_player_attack and reference_player_attack.total_hits:
-                player_reference_average = reference_player_attack.total_dmg / reference_player_attack.total_hits
-            
+                player_reference_average = (
+                    reference_player_attack.total_dmg
+                    / reference_player_attack.total_hits
+                )
+
             player_average_diff = player_average - player_reference_average
             player_average_diff_str = "({}{})".format(
-                "+" if player_average_diff > 0 else "",
-                num_to_hum(player_average_diff)
+                "+" if player_average_diff > 0 else "", num_to_hum(player_average_diff)
             )
 
             stat_string = "{:2}. {:<20}: {:>8}, {:2}, {:>8} {}".format(
@@ -148,7 +169,7 @@ class RaidStatsModule(commands.Cog, Module):
                 num_to_hum(player_average),
                 player_average_diff_str if reference_player_attack else "",
             )
-          
+
             if string_length + len(stat_string) >= DISCORD_MAX_CONTENT_LENGHT:
                 awaitables.append(
                     ctx.send("```{}```".format("\n".join(raid_player_hits)))
@@ -194,7 +215,11 @@ class RaidStatsModule(commands.Cog, Module):
         raid_attacks: List[RaidPlayerAttack] = []
         for row in DictReader(raid_data.split("\n")):
             rpa = RaidPlayerAttack(
-                raid_id, row["ID"], row["Name"], int(row["Attacks"]), int(row["Damage"])
+                raid_id,
+                row["ID"],
+                bytes(row["Name"], "ascii", "ignore").decode("utf-8"),
+                int(row["Attacks"]),
+                int(row["Damage"]),
             )
             raid_attacks.append(rpa)
 
