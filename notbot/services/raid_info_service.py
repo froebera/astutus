@@ -43,7 +43,7 @@ class RaidInfoService(Module):
                 )
 
         logger.debug("Loading raid info")
-        with open("notbot/data/raid/raid_info.csv") as csvfile:
+        with open(f"notbot/data/raid/raid_info_3.7.csv") as csvfile:
             reader = DictReader(csvfile, delimiter=";")
             for row in reader:
                 raid_info = RaidInfo(
