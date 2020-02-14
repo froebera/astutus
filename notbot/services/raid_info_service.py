@@ -99,18 +99,19 @@ class RaidInfoService(Module):
 
         patterns_base_health_scaling = []
         for idx, pattern in enumerate(all_kill_patterns):
-            total_pattern_hitpoints = 0
+            total_armor_hitpoints = 0
             for part in pattern:
                 p = part
                 p_hp = part_health[p]
                 p_armor = part_armor[p]
 
-                total_pattern_hitpoints = total_pattern_hitpoints + p_hp + p_armor
-            patterns_base_health_scaling.append((idx, total_pattern_hitpoints))
+                total_armor_hitpoints += p_armor
+
+            patterns_base_health_scaling.append((idx, total_armor_hitpoints))
 
         patterns_sorted = sorted(patterns_base_health_scaling, key=lambda x: x[1])
-        most_efficient_pattern_idx, base_hp_multiplier = patterns_sorted[0]
-        base_hp_multiplier /= 100
+        most_efficient_pattern_idx, armor_multiplier = patterns_sorted[0]
+        armor_multiplier /= 100
 
         parts = ["Torso", "Head", "Arm", "Arm", "Arm", "Arm", "Leg", "Leg"]
         p = []
@@ -118,13 +119,13 @@ class RaidInfoService(Module):
             p.append(parts[part])
 
         logger.debug(
-            "Most efficient kill pattern for %s (total hp to kill: %s): %s",
+            "Most efficient kill pattern for %s (total armor to kill: %s): %s",
             titan_info.name,
-            base_hp_multiplier,
+            armor_multiplier,
             ", ".join(p),
         )
 
-        return TitanKillPattern(titan_info.name, ", ".join(p), base_hp_multiplier)
+        return TitanKillPattern(titan_info.name, ", ".join(p), armor_multiplier)
 
     def get_titan_kill_pattern(self, titan_name: str):
         for pattern in self.kill_patterns:
@@ -163,8 +164,8 @@ class RaidInfoService(Module):
             )
 
             total_hp_to_kill = 0
-            for p in patterns:
-                damage_needed = raid_info.titan_base_hp * p.base_hp_multiplier
+            for pattern in patterns:
+                damage_needed = raid_info.titan_base_hp * pattern.get_total_hp_multiplier()
                 total_hp_to_kill += damage_needed
 
             total_hp_to_kill = int(total_hp_to_kill)
