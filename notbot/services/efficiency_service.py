@@ -51,29 +51,45 @@ class EfficiencyService(Module):
             self.redis_connection.hgetall(EFFICIENCY_KEY)
         )
 
-        self.efficiency_config[EFFICIENCY_BASE] = efficiency_config.get(
-            EFFICIENCY_BASE, 320
+        self.efficiency_config[EFFICIENCY_BASE] = int(
+            efficiency_config.get(
+                EFFICIENCY_BASE, 320
+            )
         )
-        self.efficiency_config[EFFICIENCY_CARD_PERC] = efficiency_config.get(
-            EFFICIENCY_CARD_PERC, 1.00795
+        self.efficiency_config[EFFICIENCY_CARD_PERC] = float(
+            efficiency_config.get(
+                EFFICIENCY_CARD_PERC, 1.00795
+            )
         )
-        self.efficiency_config[EFFICIENCY_TRESHOLD1] = efficiency_config.get(
-            EFFICIENCY_TRESHOLD1, 50
+        self.efficiency_config[EFFICIENCY_TRESHOLD1] = int(
+            efficiency_config.get(
+                EFFICIENCY_TRESHOLD1, 50
+            )
         )
-        self.efficiency_config[EFFICIENCY_TRESHOLD2] = efficiency_config.get(
-            EFFICIENCY_TRESHOLD2, 180
+        self.efficiency_config[EFFICIENCY_TRESHOLD2] = int(
+            efficiency_config.get(
+                EFFICIENCY_TRESHOLD2, 180
+            )
         )
-        self.efficiency_config[EFFICIENCY_REDUCTION1] = efficiency_config.get(
-            EFFICIENCY_REDUCTION1, 0.85
+        self.efficiency_config[EFFICIENCY_REDUCTION1] = float(
+            efficiency_config.get(
+                EFFICIENCY_REDUCTION1, 0.85
+            )
         )
-        self.efficiency_config[EFFICIENCY_REDUCTION2] = efficiency_config.get(
-            EFFICIENCY_REDUCTION2, 0.57
+        self.efficiency_config[EFFICIENCY_REDUCTION2] = float(
+            efficiency_config.get(
+                EFFICIENCY_REDUCTION2, 0.57
+            )
         )
-        self.efficiency_config[EFFICIENCY_CARDS_TOTAL] = efficiency_config.get(
-            EFFICIENCY_CARDS_TOTAL, 23
+        self.efficiency_config[EFFICIENCY_CARDS_TOTAL] = int(
+            efficiency_config.get(
+                EFFICIENCY_CARDS_TOTAL, 23
+            )
         )
-        self.efficiency_config[EFFICIENCY_LETHAL_BONUS] = efficiency_config.get(
-            EFFICIENCY_LETHAL_BONUS, 0.32
+        self.efficiency_config[EFFICIENCY_LETHAL_BONUS] = float(
+            efficiency_config.get(
+                EFFICIENCY_LETHAL_BONUS, 0.32
+            )
         )
 
         logger.debug("cached efficiency configuration: %s", self.efficiency_config)
