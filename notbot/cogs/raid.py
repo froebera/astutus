@@ -540,10 +540,9 @@ class RaidModule(commands.Cog, Module):
         
         if result or current_attackers_formatted:
             embed = create_embed(ctx.bot)
-            embed.title = "**Queue** for **{}**{}**{}**:".format(
+            embed.title = "**Queue** for **{}**{}:".format(
                 queue_name if queue_name else queue,
-                "" if not queue_paused else " ( paused )",
-                " ( currently closed ) " if not queue_open else "",
+                "" if not queue_paused else " ( paused )"
             )
 
             if current_attackers_formatted:
