@@ -1,9 +1,9 @@
 import asyncio
 from ..context import Context, Module
-from ..cogs.util import QUEUE_ACTIVE, QUEUE_PROGRESS, QUEUE_CURRENT_USERS
+from ..cogs.util import QUEUE_ACTIVE, QUEUE_PROGRESS, QUEUE_CURRENT_USERS, QUEUE_OPEN
 
 from ..db import QueueDao, get_queue_dao
-from ..exceptions import NotbotException, UserAlreadyQueued, UserAttacking
+from ..exceptions import NotbotException, UserAlreadyQueued, UserAttacking, QueueNotOpen
 
 MODULE_NAME = "queue_service"
 
@@ -29,6 +29,10 @@ class QueueService(Module):
         )
 
         current_users = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
+        queue_open = int(queueconfig.get(QUEUE_OPEN, 0))
+
+        if not queue_open:
+            raise QueueNotOpen()
 
         if str(user_id) in queued_users:
             raise UserAlreadyQueued(queued_users.index(str(user_id)))
@@ -49,6 +53,12 @@ class QueueService(Module):
 
     async def resume_queue(self, guild_id, queue_name):
         await self.queue_dao.resume_queue(guild_id, queue_name)
+
+    async def open_queue(self, guild_id, queue_name):
+        await self.queue_dao.open_queue(guild_id, queue_name)
+
+    async def close_queue(self, guild_id, queue_name):
+        await self.queue_dao.close_queue(guild_id, queue_name)
 
 
 def get_queue_service(context: Context) -> QueueService:

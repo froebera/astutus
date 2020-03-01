@@ -11,6 +11,7 @@ from notbot.cogs.util import (
     QUEUE_SIZE,
     QUEUE_NAME,
     QUEUE_PAUSED,
+    QUEUE_OPEN
 )
 
 import asyncio
@@ -137,6 +138,16 @@ class QueueDao(Module):
     async def resume_queue(self, guild_id, queue_name):
         await self.connection.hset(
             QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_PAUSED, 0
+        )
+
+    async def close_queue(self, guild_id, queue_name):
+        await self.connection.hset(
+            QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_OPEN, 0
+        )
+
+    async def open_queue(self, guild_id, queue_name):
+        await self.connection.hset(
+            QUEUE_CONFIG_KEY.format(guild_id, queue_name), QUEUE_OPEN, 1
         )
 
 

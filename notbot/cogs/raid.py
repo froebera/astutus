@@ -25,7 +25,7 @@ from .util.formatter import format_user_name
 from notbot.db import get_queue_dao, get_raid_dao
 from notbot.context import Context, Module
 
-from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned, UserAlreadyQueued, UserAttacking, RaidInfoNotFound, InvalidTitanCount, InvalidTitansForRaid
+from ..exceptions import RaidActive, RaidOnCooldown, NoRaidActive, RaidAlreadyCleared, RaidUnspawned, UserAlreadyQueued, UserAttacking, RaidInfoNotFound, InvalidTitanCount, InvalidTitansForRaid, QueueNotOpen
 
 logger = logging.getLogger(__name__)
 
@@ -499,6 +499,8 @@ class RaidModule(commands.Cog, Module):
             raise commands.BadArgument(f"Sorry **{format_user_name(ctx.author)}**, you are already **#{err.queued_index + 1}** in the queue")
         except UserAttacking:
             await ctx.send(f"**{format_user_name(ctx.author)}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
+        except QueueNotOpen:
+            await ctx.send(f"**Queue {queue} is currently closed")
 
         await ctx.send(f":white_check_mark: Ok **{format_user_name(ctx.author)}**, i've added you to the queue")
 
@@ -516,6 +518,7 @@ class RaidModule(commands.Cog, Module):
         queue_size = int(queueconfig.get(QUEUE_SIZE, 1))
         current_attacker_ids = queueconfig.get(QUEUE_CURRENT_USERS, "").split()
         clusters = zip_longest(*[iter(queued_users)] * queue_size, fillvalue=None)
+        queue_open = int(queueconfig.get(QUEUE_OPEN, 0))
 
         result = []
         for c in clusters:
@@ -538,9 +541,10 @@ class RaidModule(commands.Cog, Module):
         
         if result or current_attackers_formatted:
             embed = create_embed(ctx.bot)
-            embed.title = "**Queue** for **{}**{}:".format(
+            embed.title = "**Queue** for **{}**{}**{}**:".format(
                 queue_name if queue_name else queue,
-                "" if not queue_paused else " ( paused )"
+                "" if not queue_paused else " ( paused )",
+                " ( currently closed ) " if not queue_open else "",
             )
 
             if current_attackers_formatted:
@@ -765,7 +769,19 @@ class RaidModule(commands.Cog, Module):
     @commands.check(has_raid_timer_permissions)
     async def queueconfig_resume(self, ctx, queue_name: typing.Union[Queue] = "default"):
         await self.queue_service.resume_queue(ctx.guild.id, queue_name)
-        await ctx.send(f":white_check_mark: Resumed queue {queue_name}") 
+        await ctx.send(f":white_check_mark: Resumed queue {queue_name}")
+
+    @queueconfig.command(name="close")
+    @commands.check(has_raid_timer_permissions)
+    async def queueconfig_close(self, ctx, queue_name: typing.Union[Queue] = "default"):
+        await self.queue_service.close_queue(ctx.guild.id, queue_name)
+        await ctx.send(f":white_check_mark: Closed queue {queue_name}")
+
+    @queueconfig.command(name="open")
+    @commands.check(has_raid_timer_permissions)
+    async def queueconfig_open(self, ctx, queue_name: typing.Union[Queue] = "default"):
+        await self.queue_service.open_queue(ctx.guild.id, queue_name)
+        await ctx.send(f":white_check_mark: Opened queue {queue_name}") 
 
     async def check_if_queue_exists_or_break(self, guild_id, queue):
         queues = await self.queue_dao.get_all_queues(guild_id)
