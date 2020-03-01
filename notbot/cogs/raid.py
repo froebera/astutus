@@ -560,13 +560,8 @@ class RaidModule(commands.Cog, Module):
             embed.colour = 0x9e5db7
 
             await ctx.send(embed=embed)
-            # await ctx.send(
-            #     "**Queue** for **{}**:\nCurrent Attackers:\n```css\n{}```\nQueued Members:\n```css\n{}```\nUse **{}raid unqueue {}** to cancel.".format(
-            #        queue_name if queue_name else queue, current_attackers_formatted if current_attackers_formatted else "", result and "\n".join(result) or "", ctx.prefix, queue
-            #     )
-            # )
         else:
-            await ctx.send(f"Queue **{queue_name if queue_name else queue}** is currently empty")
+            await ctx.send(f"Queue **{queue_name if queue_name else queue}** is currently empty{' and **closed**' if not queue_open else ''}", )
 
     @raid_queue.command(name="skip")
     @commands.check(raidconfig_exists)
