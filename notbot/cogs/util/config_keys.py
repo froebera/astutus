@@ -10,6 +10,7 @@ QUEUE_PROGRESS = "in_progress"
 QUEUE_PING_AFTER = "role_ping_after"
 QUEUE_PAUSED = "paused"
 QUEUE_OPEN = "open"
+QUEUE_AUTO_CLOSE = "autoclose"
 
 RAID_INIT = "created"  # Dummy insert key just to check if the raid has been setup
 RAID_ANNOUNCEMENTCHANNEL = "announcement_channel"

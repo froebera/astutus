@@ -64,7 +64,7 @@ class RaidConfigKey(commands.Converter):
 TIMER_TEXT = "Raid {} **{:02}**h **{:02}**m **{:02}**s."
 
 RAID_CONFIG_KEYS = [RAID_ANNOUNCEMENTCHANNEL, RAID_MANAGEMENT_ROLES, RAID_TIMER_ROLES, RAID_CLAN_ROLES]
-QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER]
+QUEUE_CONFIG_KEYS = [QUEUE_NAME, QUEUE_SIZE, QUEUE_PING_AFTER, QUEUE_AUTO_CLOSE]
 
 MODULE_NAME = "raid_cog"
 
@@ -252,6 +252,8 @@ class RaidModule(commands.Cog, Module):
         queue_in_progress = int(queue_config.get(QUEUE_PROGRESS, 0))
         queue_name = queue_config.get(QUEUE_NAME, None)
         queue_ping_after = int(queue_config.get(QUEUE_PING_AFTER, 0))
+        queue_auto_close = int(queue_config.get(QUEUE_AUTO_CLOSE, 0))
+
         queue_paused = int(queue_config.get(QUEUE_PAUSED, 0))
 
         is_active = queue_config.get(QUEUE_ACTIVE, 0)
@@ -291,6 +293,9 @@ class RaidModule(commands.Cog, Module):
         if not queued_users and not current_users:
             # Queue is over
             await self.queue_dao.reset_queue(guild.id, queue)
+
+            if queue_auto_close:
+                await self.queue_service.close_queue(guild.id, queue)
 
             ping = ""
             if queue_ping_after:
@@ -700,7 +705,7 @@ class RaidModule(commands.Cog, Module):
         if not queue:
             queue = "default"
 
-        if config_key in [QUEUE_SIZE]:
+        if config_key in [QUEUE_SIZE, QUEUE_AUTO_CLOSE]:
             try:
                 value = int(config_value)
                 formatted_value = f"**{value}**"
@@ -713,6 +718,10 @@ class RaidModule(commands.Cog, Module):
         else:
             value = config_value
             formatted_value = f"**{value}**"
+
+        if config_key in [QUEUE_AUTO_CLOSE]:
+            if value < 0 or value > 1:
+                raise commands.BadArgument(f"**{config_key}** has to be 0 or 1")
 
         await self.queue_dao.set_key(ctx.guild.id, queue, config_key, value)
         await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else value} for queue **{queue}**")  
