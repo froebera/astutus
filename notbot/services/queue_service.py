@@ -21,6 +21,9 @@ class QueueService(Module):
         for k in [QUEUE_ACTIVE, QUEUE_PROGRESS, QUEUE_CURRENT_USERS]:
             await self.queue_dao.del_key(guild_id, queue_name, k)
 
+    async def clear_queued_users(self, guild_id, queue_name):
+        await self.queue_dao.delete_queued_users(guild_id, queue_name)
+
     async def queue_up(self, user_id, guild_id, queue_name):
         queueconfig, queued_users = await asyncio.gather(
             self.queue_dao.get_queue_configuration(guild_id, queue_name),

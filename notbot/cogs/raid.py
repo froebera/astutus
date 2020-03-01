@@ -775,6 +775,7 @@ class RaidModule(commands.Cog, Module):
     @commands.check(has_raid_timer_permissions)
     async def queueconfig_close(self, ctx, queue_name: typing.Union[Queue] = "default"):
         await self.queue_service.close_queue(ctx.guild.id, queue_name)
+        await self.queue_service.clear_queued_users(ctx.guild.id, queue_name)
         await ctx.send(f":white_check_mark: Closed queue {queue_name}")
 
     @queueconfig.command(name="open")
