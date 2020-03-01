@@ -495,14 +495,13 @@ class RaidModule(commands.Cog, Module):
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
         try:
             await self.queue_service.queue_up(ctx.author.id, ctx.guild.id, queue)
+            await ctx.send(f":white_check_mark: Ok **{format_user_name(ctx.author)}**, i've added you to the queue")
         except UserAlreadyQueued as err:
             raise commands.BadArgument(f"Sorry **{format_user_name(ctx.author)}**, you are already **#{err.queued_index + 1}** in the queue")
         except UserAttacking:
-            await ctx.send(f"**{format_user_name(ctx.author)}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
+            raise commands.BadArgument(f"**{format_user_name(ctx.author)}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your ")
         except QueueNotOpen:
-            await ctx.send(f"Queue **{queue}** is currently closed")
-
-        await ctx.send(f":white_check_mark: Ok **{format_user_name(ctx.author)}**, i've added you to the queue")
+            raise commands.BadArgument(f"Queue **{queue}** is currently closed")
 
     @raid_queue.command(name="show")
     @commands.check(raidconfig_exists)
