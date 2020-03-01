@@ -500,7 +500,7 @@ class RaidModule(commands.Cog, Module):
         except UserAttacking:
             await ctx.send(f"**{format_user_name(ctx.author)}**, you are currently attacking, use **{ctx.prefix}raid done {queue}** to finish your turn")
         except QueueNotOpen:
-            await ctx.send(f"**Queue {queue} is currently closed")
+            await ctx.send(f"Queue **{queue}** is currently closed")
 
         await ctx.send(f":white_check_mark: Ok **{format_user_name(ctx.author)}**, i've added you to the queue")
 
