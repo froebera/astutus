@@ -1,5 +1,6 @@
 from discord.ext import tasks
 from discord.ext import commands
+import discord
 import importlib
 import os
 import glob
@@ -68,7 +69,7 @@ class AdminModule(commands.Cog, Module):
     @admin.command(name="rc")
     async def admin_create_role(self, ctx):
         author = ctx.message.author
-        await ctx.guild.create_role(name="Baby Whale", colour=0x3cd2ed)
+        await ctx.guild.create_role(name="Baby Whale", colour=discord.Colour(0x3cd2ed))
 
 
 def setup(bot):
