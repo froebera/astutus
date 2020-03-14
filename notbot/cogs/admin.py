@@ -68,7 +68,7 @@ class AdminModule(commands.Cog, Module):
     @admin.command(name="rc")
     async def admin_create_role(self, ctx):
         author = ctx.message.author
-        await ctx.guild.create_role(author.server, name="role name")
+        await ctx.guild.create_role(name="role name")
 
 
 def setup(bot):
