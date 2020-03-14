@@ -64,6 +64,12 @@ class AdminModule(commands.Cog, Module):
             return
         return await self.redis_connection.lrem(redis_key, value)
 
+    @commands.is_owner()
+    @admin.command(name="rc")
+    async def admin_create_role(self, ctx):
+        author = ctx.message.author
+        await self.bot.create_role(author.server, name="role name")
+
 
 def setup(bot):
     context: Context = bot.context
