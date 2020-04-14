@@ -725,7 +725,7 @@ class RaidModule(commands.Cog, Module):
         
         if config_key in [QUEUE_SIZE]:
             if not value > 0:
-                raise commands.BadArgument(f"**{config_key}** has to be greater than 0 you dumb shit")
+                raise commands.BadArgument(f"**{config_key}** has to be greater than 0")
 
         await self.queue_dao.set_key(ctx.guild.id, queue, config_key, value)
         await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else value} for queue **{queue}**")  
