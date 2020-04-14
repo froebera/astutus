@@ -710,7 +710,7 @@ class RaidModule(commands.Cog, Module):
                 value = int(config_value)
                 formatted_value = f"**{value}**"
             except ValueError:
-                raise commands.BadArgument(f"Cannot set **{config_key}** to **{value}**. Integer required")
+                raise commands.BadArgument(f"Cannot set **{config_key}** to **{config_value}**. Integer required")
         elif config_key in [QUEUE_PING_AFTER]:
             role = await commands.RoleConverter().convert(ctx, config_value)
             value = role.id
@@ -722,6 +722,10 @@ class RaidModule(commands.Cog, Module):
         if config_key in [QUEUE_AUTO_CLOSE]:
             if value < 0 or value > 1:
                 raise commands.BadArgument(f"**{config_key}** has to be 0 or 1")
+        
+        if config_key in [QUEUE_SIZE]:
+            if not value > 0:
+                raise commands.BadArgument(f"**{config_key}** has to be greater than 0 you dumb shit")
 
         await self.queue_dao.set_key(ctx.guild.id, queue, config_key, value)
         await ctx.send(f":white_check_mark: Successfully set **{config_key}** to {formatted_value if formatted_value else value} for queue **{queue}**")  
