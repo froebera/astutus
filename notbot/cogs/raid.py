@@ -497,6 +497,7 @@ class RaidModule(commands.Cog, Module):
     @raid.group(name="queue", aliases=["q"], invoke_without_command=True)
     @commands.check(has_clan_role)
     @commands.check(raidconfig_exists)
+    @commands.cooldown(1, 30, commands.BucketType.user)
     async def raid_queue(self, ctx, queue: typing.Union[Queue] = "default"):
         try:
             await self.queue_service.queue_up(ctx.author.id, ctx.guild.id, queue)
