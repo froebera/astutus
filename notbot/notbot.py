@@ -254,8 +254,8 @@ class NOTBOT(commands.AutoShardedBot):
         if isinstance(error, commands.CommandOnCooldown):
             cooldown = round(error.retry_after)
             await ctx.send(
-                "Woah **{}**, please calm down. Try **{}{}** again in **{}**s.".format(
-                    ctx.author, ctx.prefix, self.get_full_name_for_called_command(ctx), cooldown
+                "Woah **{}**, please calm down. Try again in **{}**s.".format(
+                    ctx.author, cooldown
                 )
             )
         elif isinstance(error, commands.BadArgument):
