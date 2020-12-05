@@ -21,7 +21,7 @@ chardet==3.0.4
 Click==7.0
 colorama==0.4.1
 decorator==4.4.0
-discord.py==1.2.5
+discord.py==1.5.1
 docutils==0.14
 hiredis==1.0.0
 humanfriendly==4.18

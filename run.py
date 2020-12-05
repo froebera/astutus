@@ -1,4 +1,7 @@
 from notbot import NOTBOT, context
+import discord
 
-bot = NOTBOT(context)
+intents = discord.Intents.default()
+intents.members = True
+bot = NOTBOT(context, intents)
 bot.run()

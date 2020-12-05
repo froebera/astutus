@@ -60,12 +60,13 @@ async def prefix_callable(bot, message) -> list:
     return prefix_base
 
 
-class NOTBOT(commands.AutoShardedBot):
-    def __init__(self, ctx: Context):
+class NOTBOT(commands.Bot):
+    def __init__(self, ctx: Context, intents):
         super().__init__(
             command_prefix=prefix_callable,
             description="",
             pm_help=None,
+            intents = intents,
             fetch_offline_members=True,
         )
         self.before_invoke(self._before_invoke_callback)
