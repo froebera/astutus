@@ -6,6 +6,7 @@ import traceback
 
 import arrow
 import discord
+import os
 from discord.ext import tasks
 from discord.ext import commands
 from discord.utils import get
@@ -219,7 +220,8 @@ class NOTBOT(commands.Bot):
 
     def run(self):
         config_service = get_config_service(self.context)
-        token = config_service.get_config("NOTBOT")["token"]
+        token = config_service.get_config("NOTBOT").get("token", os.getenv('NOTBOT_TOKEN'))
+
         super().run(token, reconnect=True)
 
     def get_full_name_for_called_command(self, ctx):

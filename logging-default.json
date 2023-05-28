@@ -20,7 +20,7 @@
       "formatter": "simple",
       "filename": "./logs/notbot-info.log",
       "maxBytes": 10485760,
-      "backupCount": 20,
+      "backupCount": 5,
       "encoding": "utf8"
     },
 
@@ -30,13 +30,13 @@
       "formatter": "simple",
       "filename": "./logs/notbot-errors.log",
       "maxBytes": 10485760,
-      "backupCount": 20,
+      "backupCount": 5,
       "encoding": "utf8"
     }
   },
 
   "root": {
     "level": "INFO",
-    "handlers": ["console", "info_file_handler", "error_file_handler"]
+    "handlers": ["console", "error_file_handler"]
   }
 }

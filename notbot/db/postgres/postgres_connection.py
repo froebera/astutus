@@ -7,7 +7,6 @@ from asyncpg.pool import Pool
 
 MODULE_NAME = "postgres_connection"
 
-
 class PostgresConnection(Module):
     def __init__(self, context: Context):
         self.config_service = get_config_service(context)
